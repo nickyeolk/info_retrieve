@@ -10,3 +10,6 @@ curl -Lo encoder/infersent1.pkl https://dl.fbaipublicfiles.com/infersent/inferse
 curl -Lo encoder/infersent2.pkl https://dl.fbaipublicfiles.com/infersent/infersent2.pkl
 python -m nltk.downloader punkt
 git clone https://github.com/facebookresearch/InferSent.git
+cd data
+git clone https://github.com/shuzi/insuranceQA.git
+gzip -r ./insuranceQA/V2/
