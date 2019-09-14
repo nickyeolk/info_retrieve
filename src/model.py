@@ -45,12 +45,21 @@ class QnaEncoderModel:
 
 class USEModel:
     def __init__(self):
-        self.embed = hub.Module("./google_use")
-        self.session = tf.Session()
-        self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
+        g=tf.Graph()
+        with g.as_default():
+            embed = hub.Module("./google_use")
+            self.statement = tf.placeholder(dtype=tf.string, shape=[None]) #text input
+            self.embeddings = embed(
+                dict(text=self.statement),
+                as_dict=True
+            )
+            init_op = tf.group([tf.global_variables_initializer(), tf.tables_initializer()])
+        g.finalize()
+        self.session = tf.Session(graph=g)
+        self.session.run(init_op)
         
     def predict(self, text):
-        return self.session.run(self.embed(text))
+        return self.session.run(self.embeddings, feed_dict={self.statement:text})['default']
 
     def close(self):
         self.session.close()
@@ -75,6 +84,6 @@ class InferSent:
         self.infersent.update_vocab(text, tokenize=True)
 
     def predict(self, text):
-        self.update_vocab(text)
-        return self.encode(text, tokenize=True)
+        # self.update_vocab(text)
+        return self.infersent.encode(text, tokenize=True)
         
