@@ -17,3 +17,4 @@ Currently, 3 sentence encoding models are compared against the test set of the [
 |InferSent|0.083|0.134|0.1814|0.226|0.268|
 |Google USE|0.251|0.346|0.427|0.481|0.534|
 |Google USE-QA|**0.387**|**0.519**|**0.590**|**0.648**|**0.698**|
+|TFIDF baseline|0.2457|0.3492|0.4127|0.4611|0.4989|
