@@ -1,0 +1,46 @@
+Q1. WHAT SORT OF CANDIDATES ARE YOU LOOKING FOR?
+We are looking for candidates who possess a keen interest in the area of machine learning and data science. We believe that candidates can come from any area of specialisation, and our requirements are as follow:
+i)   Singaporean with a polytechnic diploma or university degree,
+ii) Proficient in Python or R and iii) Is able to implement Machine Learning Algorithms or have a background in Mathematics / Statistics / Computer Science. 
+Beyond that, demonstrated statistical fundamentals and programming ability will be helpful for the technical tests, but a keen learning attitude will be the most important to carry you through the programme. 
+
+
+Q2. WHAT WILL BE COVERED IN THE PROGRAMME?
+We will begin with some structured coursework involving programming, modelling and deployment. Following which, apprentices will be assigned to 100E projects to hone their skills in-depth, specific to each project.
+Generally, you will be doing the following:
+Deploy Machine Learning applications in line with industry best practices
+Select, train and tune Machine Learning algorithms
+Design and build Data Pipelines and Infrastructures for AI Use Cases
+
+
+Q3. DO I HAVE TO PAY?
+No payment is required. All apprentices will receive full sponsorship from AI Singapore and Infocomm and Media Development Authority.  The apprentices will also receive a stipend of between SGD$3,500 to $5,500/month depending on your working experience.
+
+
+Q4. WHAT IS THE OUTCOME OF THIS PROGRAMME?
+Candidates can expect to be equipped in some or all of the following skills: data modelling/tuning, data engineering, data product-related software engineering, cloud applications. It ranges between individuals, but candidates can be adequately prepared in fields of data science, engineering and consultancy
+
+
+Q5. WILL I GET A JOB AFTER THE PROGRAMME?
+While AI Singapore encourage our industry partners to place job postings for our apprentices, it is ultimately your responsibility to find a job most suitable for yourself.
+
+
+Q6. WILL THERE BE A NEXT ROUND OF APPLICATION?
+Yes, we run 3 iterations of the programme every year, about 4 months apart. You may apply again if you are unsuccessful or unavailable for the current batch.
+
+
+Q7. DO I HAVE TO GIVE UP MY CURRENT JOB TO JOIN THE  PROGRAMME?
+YES. This is a FULL TIME programme where you will undergo training at an intensive pace over 9 months.  Due to our sponsorship requirements, you are not allowed to take no-pay leave to attend the programme.
+
+
+Q8. WHAT IF I DECIDED TO DROP OUT OF THE PROGRAMME?
+If you drop out of the course, you will have to reimburse AISG the training stipends paid out to you and the fees for the programme.
+
+
+Q9. WILL I GET SOME SORT OF CERTIFICATE TO SHOW THAT I PARTICIPATED IN THE AIAP?
+Apprentices who have successfully completed the AIAP will receive a certificate from AISG.
+
+
+Q10. WHAT ARE THE AI JOBS AND ROLES I CAN CONSIDER AFTER COMPLETING THE TRAINING PROGRAMME?
+They may include AI Engineer, ML Engineer, AI Dev Ops, AI Developer or AI Consultant.
+
