@@ -13,3 +13,5 @@ git clone https://github.com/facebookresearch/InferSent.git
 cd data
 git clone https://github.com/shuzi/insuranceQA.git
 gzip -r ./insuranceQA/V2/
+mkdir google_use_qa
+curl -L "https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/1?tf-hub-format=compressed" | tar -zxvC ./google_use_qa
