@@ -2,11 +2,15 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import tf_sentencepiece
+from .metric_learning import triplet_loss
 
 class QnaEncoderModel:
-    def __init__(self, lr=0.001):
+    def __init__(self, lr=0.1, margin=0.1, loss='triplet'):
+        '''loss can be 'triplet'(default), or 'cosine'. '''
         self.v=v=['module/QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','module/QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.lr = lr
+        self.margin = margin
+        self.loss = loss
         # Set up graph.
         tf.reset_default_graph() # finetune
         g = tf.Graph()
@@ -14,12 +18,17 @@ class QnaEncoderModel:
             embed = hub.Module("./google_use_qa", trainable=True)
             # put placeholders
             self.question = tf.placeholder(dtype=tf.string, shape=[None])  # question
+            self.neg_question = tf.placeholder(dtype=tf.string, shape=[None])  # question
             self.response = tf.placeholder(dtype=tf.string, shape=[None])  # response
             self.response_context = tf.placeholder(dtype=tf.string, shape=[None])  # response context
             self.label = tf.placeholder(tf.int32, [None], name='label')
             
             self.question_embeddings = embed(
             dict(input=self.question),
+            signature="question_encoder", as_dict=True)
+
+            self.neg_question_embeddings = embed(
+            dict(input=self.neg_question),
             signature="question_encoder", as_dict=True)
 
             self.response_embeddings = embed(
@@ -31,11 +40,14 @@ class QnaEncoderModel:
 
             # finetune
             # tf 1.13 does not have contrastive loss. Might have to self-implement.
-            cost = tf.losses.metric_learning.contrastive_loss(self.label, self.question_embeddings['outputs'], self.response_embeddings['outputs'])
-            # cost = tf.losses.cosine_distance(self.question_embeddings['outputs'], self.response_embeddings['outputs'], axis=1)
+            if self.loss=='triplet':
+                self.cost = triplet_loss(self.response_embeddings['outputs'], self.question_embeddings['outputs'], self.neg_question_embeddings['outputs'], margin=self.margin)
+            elif self.loss=='cosine':
+                self.cost = tf.losses.cosine_distance(self.question_embeddings['outputs'], self.response_embeddings['outputs'], axis=1)
+            else: raise Exception('invalid loss selected. Choose either triplet or cosine.')
             opt = tf.train.GradientDescentOptimizer(learning_rate=self.lr)
             var_finetune=[x for x in embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
-            self.opt_op = opt.minimize(cost, var_list=var_finetune)
+            self.opt_op = opt.minimize(self.cost, var_list=var_finetune)
         g.finalize()
 
         # Initialize session.
@@ -54,12 +66,20 @@ class QnaEncoderModel:
             })['outputs']
         else: print('Type of prediction not defined')
 
-    def finetune(self, question, answer, context, label):
-        self.session.run(self.opt_op, feed_dict={
-            self.question:question, 
+    def finetune(self, question, answer, context, neg_question=None):
+        current_loss = self.session.run(self.cost, feed_dict={
+            self.question:question,
+            self.neg_question:neg_question, 
             self.response:answer,
-            self.response_context:context,
-            self.label:label})
+            self.response_context:context})
+        self.session.run(self.opt_op, feed_dict={
+            self.question:question,
+            self.neg_question:neg_question, 
+            self.response:answer,
+            self.response_context:context
+            })
+        return current_loss
+        
 
     def close(self):
         self.session.close()

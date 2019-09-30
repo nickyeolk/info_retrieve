@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+
 def question_cleaner(df_query):
     kb=([int(xx) for xx in (df_query[3].iloc[0]).split(' ')])
     gt = [int(xx) for xx in (df_query[2].iloc[0]).split(' ')]
@@ -51,12 +52,13 @@ def split_txt(text, qa=False):
     else: return condition_terms
 
 def aiap_qna(question, answer_array, aiap_qa, model, k=1):
-    sortargs=np.flip(cosine_similarity(answer_array, model.predict([question], type='query')).argsort(axis=0))
+    similarity_score=cosine_similarity(answer_array, model.predict([question], type='query'))
+    sortargs=np.flip(similarity_score.argsort(axis=0))
     sortargs=[x[0] for x in sortargs]
     sorted_ans=[]
     for indx in range(k):
         sorted_ans.append(aiap_qa[sortargs[indx]])
-    return sorted_ans, sortargs
+    return sorted_ans, sortargs, similarity_score
 
 def aiap_qna_quickscore(aiap_context, answer_array, aiap_qa, model, k=1):
     '''Quickly scores the model against the aiap qna dataset. 
@@ -67,3 +69,29 @@ def aiap_qna_quickscore(aiap_context, answer_array, aiap_qa, model, k=1):
         if bool(set([ii]) & set(sortargs[:k])):
             score+=1
     return score/len(aiap_context)
+
+def ranker(model, question_vectors, df_query, df_doc):
+    '''for model evaluation on InsuranceQA datset'''
+    predictions=[]
+    gts=[]
+    for ii, question_vector in enumerate(question_vectors):
+        kb=[int(xx) for xx in (df_query[3].iloc[ii]).split(' ')]
+        gt = [int(xx) for xx in (df_query[2].iloc[ii]).split(' ')]
+        doc_vectors = model.predict(df_doc.loc[kb]['text'].tolist())
+        cossim = cosine_similarity(doc_vectors, question_vector.reshape(1, -1))
+        sortargs=np.flip(cossim.argsort(axis=0))
+        returnedans = [kb[jj[0]] for jj in sortargs]
+        predictions.append(returnedans)
+        gts.append(gt)
+    return predictions, gts
+        
+def scorer(predictions, gts, k=3):
+    '''for model evaluation on InsuranceQA datset'''
+    'returns score@k'
+    score=0
+    total=0
+    for gt, prediction in zip(gts, predictions):
+        if bool(set(gt) & set(prediction[:k])):
+            score+=1
+        total+=1
+    return score/total
