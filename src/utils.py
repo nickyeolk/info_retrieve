@@ -65,7 +65,7 @@ def aiap_qna_quickscore(aiap_context, answer_array, aiap_qa, model, k=1):
     This function works because the order of questions and answers are synched in the list'''
     score=0
     for ii, qn in enumerate(aiap_context):
-        _, sortargs = aiap_qna(qn, answer_array, aiap_qa, model, k)
+        _, sortargs, simscore = aiap_qna(qn, answer_array, aiap_qa, model, k)
         if bool(set([ii]) & set(sortargs[:k])):
             score+=1
     return score/len(aiap_context)
