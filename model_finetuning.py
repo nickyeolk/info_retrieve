@@ -47,12 +47,12 @@ if __name__=='__main__':
         for margin in margins:
             model=QnaEncoderModel(lr=learning_rate, margin=margin, loss='triplet')
             batch_size=100
-            for epoch in range(2):
+            for epoch in range(3):
                 mlflow.start_run(experiment_id=expid)
                 mlflow.log_params({'learning_rate':learning_rate, 'margin':margin, 'epoch':epoch})
                 for ii in range(0, len(answers), batch_size):
-                    (kb, query, neg_query) = (questions[ii:ii+batch_size], answers[ii:ii+batch_size], wrong_answers[ii:ii+batch_size])
-                    current_loss = model.finetune(kb, query, query, neg_query)
+                    (qn, ans, neg_ans) = (questions[ii:ii+batch_size], answers[ii:ii+batch_size], wrong_answers[ii:ii+batch_size])
+                    current_loss = model.finetune(qn, ans, ans, neg_ans, neg_ans)
                     mlflow.log_metric('loss',current_loss)
                     # print(ii, current_loss)
                 # score on test data
