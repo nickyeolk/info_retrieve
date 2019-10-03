@@ -6,7 +6,7 @@ from src.utils import read_txt, split_txt, aiap_qna_quickscore
 from src.utils import question_cleaner, display_qn_and_ans, aiap_qna, ranker, scorer
 import tensorflow as tf
 import tensorflow_hub as hub
-from src.model import QnaEncoderModel
+from src.model import GoldenRetriever
 from pathlib import Path
 import random
 import pickle
@@ -14,8 +14,8 @@ import sys
 
 if __name__=='__main__':
 
-    learning_rates=[0.01, 0.03, 0.06, 0.1, 0.3, 0.6]
-    margins=[0.01, 0.1, 0.3, 0.6, 0.9]
+    learning_rates=[0.06]
+    margins=[0.3]
 
     # Load and clean dataset
     datapath=Path('./data')
@@ -39,21 +39,21 @@ if __name__=='__main__':
     df_test['text']=df_test.apply(lambda x: wordifier(x[1]), axis=1)
 
     # Load processed train data
-    with open("./tmp_trainset.pickle", "rb") as f:
+    with open("./data/tmp_trainset.pickle", "rb") as f:
         answers,questions,wrong_answers = pickle.load(f) 
     random.shuffle(wrong_answers)
-    expid = mlflow.set_experiment(sys.argv[1])
+    # expid = mlflow.set_experiment(sys.argv[1])
     for learning_rate in learning_rates:
         for margin in margins:
-            model=QnaEncoderModel(lr=learning_rate, margin=margin, loss='triplet')
+            model=GoldenRetriever(lr=learning_rate, margin=margin, loss='triplet')
             batch_size=100
             for epoch in range(3):
-                mlflow.start_run(experiment_id=expid)
-                mlflow.log_params({'learning_rate':learning_rate, 'margin':margin, 'epoch':epoch})
+                # mlflow.start_run(experiment_id=expid)
+                # mlflow.log_params({'learning_rate':learning_rate, 'margin':margin, 'epoch':epoch})
                 for ii in range(0, len(answers), batch_size):
                     (qn, ans, neg_ans) = (questions[ii:ii+batch_size], answers[ii:ii+batch_size], wrong_answers[ii:ii+batch_size])
                     current_loss = model.finetune(qn, ans, ans, neg_ans, neg_ans)
-                    mlflow.log_metric('loss',current_loss)
+                    # mlflow.log_metric('loss',current_loss)
                     # print(ii, current_loss)
                 # score on test data
                 question_vectors = model.predict(df_test['text'].tolist(), type='query')
@@ -61,9 +61,10 @@ if __name__=='__main__':
                 for k in range(5):
                     string='Accuracy_at_'
                     string+=str(k+1)
-                    mlflow.log_metric(string, scorer(predictions, gts, k+1))
+                    # mlflow.log_metric(string, scorer(predictions, gts, k+1))
                     # print('Score @{}: {:.4f}'.format(k+1, scorer(predictions, gts, k+1)))
-                mlflow.end_run()
+                # mlflow.end_run()
+            model.export(savepath='./google_use_qa_insuranceqa/variables')
             model.close()
 
 

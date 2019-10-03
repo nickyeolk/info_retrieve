@@ -66,6 +66,7 @@ def aiap_qna_quickscore(aiap_context, answer_array, aiap_qa, model, k=1):
     score=0
     for ii, qn in enumerate(aiap_context):
         _, sortargs, simscore = aiap_qna(qn, answer_array, aiap_qa, model, k)
+        # print(qn, aiap_qa[sortargs[0]], simscore)
         if bool(set([ii]) & set(sortargs[:k])):
             score+=1
     return score/len(aiap_context)

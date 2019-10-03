@@ -64,7 +64,7 @@ class GoldenRetriever:
                 self.cost = triplet_loss(self.question_embeddings['outputs'], self.response_embeddings['outputs'], self.neg_response_embeddings['outputs'], margin=self.margin)
             elif self.loss=='cosine':
                 self.cost = tf.losses.cosine_distance(self.question_embeddings['outputs'], self.response_embeddings['outputs'], axis=1)
-            else: raise Exception('invalid loss selected. Choose either triplet or cosine.')
+            else: raise NotImplementedError('invalid loss selected. Choose either triplet or cosine.')
             opt = tf.train.GradientDescentOptimizer(learning_rate=self.lr)
             var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
             self.opt_op = opt.minimize(self.cost, var_list=var_finetune)
@@ -73,6 +73,7 @@ class GoldenRetriever:
         # Initialize session.
         self.session = tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=True))
         self.session.run(init_op)
+        print('model initiated!')
     
     def predict(self, text, context=None, type='response'):
         """Return the tensor representing embedding of input text."""
