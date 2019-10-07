@@ -9,22 +9,23 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class GoldenRetriever:
     """GoldenRetriever model for information retrieval prediction and finetuning.
-        
-    Parameters
-    ----------
-    lr: Learning rate (default 0.6)
-    loss: loss function to use. Options are 'cosine'(default), or 'triplet' which is a triplet loss based on cosine distance.
-    margin: margin to be used if loss='triplet' (default 0.1)
-
-    Example:
-    >>> gr = GoldenRetriever()
-    >>> text_list = ['I love my chew toy!', 'I hate Mondays.']
-    >>> gr.load_kb(text_list=text_list)
-    >>> gr.make_query('what do you not love?', top_k=1)
-    ['I hate Mondays.']
     """
-
+    
     def __init__(self, lr=0.6, margin=0.3, loss='cosine'):
+        """        
+        Parameters
+        ----------
+        lr: Learning rate (default 0.6)
+        loss: loss function to use. Options are 'cosine'(default), or 'triplet' which is a triplet loss based on cosine distance.
+        margin: margin to be used if loss='triplet' (default 0.1)
+
+        Example:
+        >>> gr = GoldenRetriever()
+        >>> text_list = ['I love my chew toy!', 'I hate Mondays.']
+        >>> gr.load_kb(text_list=text_list)
+        >>> gr.make_query('what do you not love?', top_k=1)
+        ['I hate Mondays.']
+        """
         self.v=v=['module/QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','module/QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.lr = lr
         self.margin = margin
@@ -118,6 +119,8 @@ class GoldenRetriever:
         self.session.close()
 
     def load_kb(self, path_to_kb=None, text_list=None, is_faq=False):
+        """Give either path to .txt document or list of clauses.
+        For text document, each clause is separated by 2 newlines (\n)"""
         if text_list:
             self.text = text_list
         else:
@@ -127,11 +130,14 @@ class GoldenRetriever:
                 self.text = split_txt(read_txt(path_to_kb), is_faq)
         self.vectorized_knowledge = self.predict(self.text, type='response')
 
-    def make_query(self, querystring, top_k=5):
+    def make_query(self, querystring, top_k=5, index=False):
+        """choose index=True to return sorted index of matches"""
         similarity_score=cosine_similarity(self.vectorized_knowledge, self.predict([querystring], type='query'))
         sortargs=np.flip(similarity_score.argsort(axis=0))
         sortargs=[x[0] for x in sortargs]
         sorted_ans=[self.text[i] for i in sortargs]
+        if index:
+            return sorted_ans[:top_k], sortargs[:top_k]
         return sorted_ans[:top_k], similarity_score
 
 
