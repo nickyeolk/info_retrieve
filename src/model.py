@@ -138,7 +138,7 @@ class GoldenRetriever:
         sorted_ans=[self.text[i] for i in sortargs]
         if index:
             return sorted_ans[:top_k], sortargs[:top_k]
-        return sorted_ans[:top_k], similarity_score
+        return sorted_ans[:top_k], similarity_score[sortargs[:top_k]]
 
 
 
