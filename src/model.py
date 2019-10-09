@@ -72,7 +72,7 @@ class GoldenRetriever:
         # g.finalize()
 
         # Initialize session.
-        self.session = tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=True))
+        self.session = tf.Session(graph=g, config=tf.ConfigProto(log_device_placement=False))
         self.session.run(init_op)
         print('model initiated!')
     
@@ -114,6 +114,7 @@ class GoldenRetriever:
     def restore(self, savepath):
         saver=Saver(self.embed.variables)
         saver.restore(self.session, savepath)
+        print('model checkpoint restored!')
 
     def close(self):
         self.session.close()
@@ -129,6 +130,7 @@ class GoldenRetriever:
             else:
                 self.text = split_txt(read_txt(path_to_kb), is_faq)
         self.vectorized_knowledge = self.predict(self.text, type='response')
+        print('knowledge base lock and loaded!')
 
     def make_query(self, querystring, top_k=5, index=False):
         """choose index=True to return sorted index of matches"""
