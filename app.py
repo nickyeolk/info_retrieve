@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 # test_ans={'answer':'This is the answer', 'confidence':0.5}
 gr = GoldenRetriever()
-gr.restore('/data/home/lik/info_retrieve/google_use_nrf_tuned/variables-0')
+gr.restore('./google_use_nrf_tuned/variables-0')
 gr.load_kb(path_to_kb='./data/aiap.txt', is_faq=True)
 
 @app.route('/', methods=['POST', 'GET'])
