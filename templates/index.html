@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+	<meta charset = "utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<div class = "container">
+		<div class = "jumbotron jumbotron-fluid">
+            <h1 class="display-4">GoldenRetriever</h1>
+            <p class="lead">The GoldenRetriever demo allows you to query an FAQ and a T&C knowledge base.</p>
+		</div>
+		<div class="container">
+			<p>Ask the GoldenRetriever a question</p>
+			<p><a href = "https://github.com/nickyeolk/info_retrieve">Repo here!</a> </p>
+            <form action = "/predict" method = "GET">
+                <select name="kbname">
+                    <option value="aiap">AIAP</option>
+                    <option value="resale_tnc">HDB Resale</option>
+                    <!-- <option value="pdpa">PDPA</option> -->
+                </select><br>
+			    <input type = "textarea" name = "question"/>
+			    <input type = "submit" class="btn btn-info"/>
+			</form>
+			<br>
+            {% if prediction %}     
+            <h2><text>Question: </text>{{question}}</h2>
+			<h2><text>Answer: </text>
+			{{prediction}}</h2><br>
+            <h2>Confidence: {{rating}}</h2><br>
+			{% endif %}
+		</div>
+	</div>
+</body>
+</html>

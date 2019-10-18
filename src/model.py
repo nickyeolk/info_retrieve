@@ -11,7 +11,7 @@ class GoldenRetriever:
     """GoldenRetriever model for information retrieval prediction and finetuning.
     """
     
-    def __init__(self, lr=0.6, margin=0.3, loss='cosine'):
+    def __init__(self, lr=0.6, margin=0.3, loss='triplet'):
         """        
         Parameters
         ----------
