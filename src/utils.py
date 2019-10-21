@@ -46,7 +46,8 @@ def split_txt(text, qa=False):
     if qa:
         condition_context = [x.split('\n')[0] for x in condition_terms]
         condition_terms = [' '.join(x.split('\n')[1:]) for x in condition_terms]
-    condition_terms=[x.replace('\n', '. ') for x in condition_terms]
+    condition_terms=[x.replace('\n', '. ') for x in condition_terms] # not sure how newlines are tokenized
+    condition_terms=[x.replace('.. ', '. ').rstrip() for x in condition_terms] # remove artifact
     if qa:
         return condition_terms, condition_context
     else: return condition_terms
