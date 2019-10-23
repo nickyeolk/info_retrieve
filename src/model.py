@@ -2,7 +2,7 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import tf_sentencepiece
-from .metric_learning import triplet_loss
+from .metric_learning import triplet_loss, contrastive_loss
 from tensorflow.train import Saver
 from .utils import split_txt, read_txt
 from sklearn.metrics.pairwise import cosine_similarity
@@ -16,7 +16,7 @@ class GoldenRetriever:
         Parameters
         ----------
         lr: Learning rate (default 0.6)
-        loss: loss function to use. Options are 'cosine'(default), or 'triplet' which is a triplet loss based on cosine distance.
+        loss: loss function to use. Options are 'cosine'(default), 'contrastive', or 'triplet' which is a triplet loss based on cosine distance.
         margin: margin to be used if loss='triplet' (default 0.1)
 
         Example:
@@ -26,7 +26,8 @@ class GoldenRetriever:
         >>> gr.make_query('what do you not love?', top_k=1)
         ['I hate Mondays.']
         """
-        self.v=v=['module/QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','module/QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
+        # self.v=['module/QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','module/QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
+        self.v=['module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.lr = lr
         self.margin = margin
         self.loss = loss
@@ -35,6 +36,7 @@ class GoldenRetriever:
         g = tf.Graph()
         with g.as_default():
             self.embed = hub.Module("./google_use_qa", trainable=True)
+            # self.embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/1", trainable=True)
             # put placeholders
             self.question = tf.placeholder(dtype=tf.string, shape=[None])  # question
             self.response = tf.placeholder(dtype=tf.string, shape=[None])  # response
@@ -65,6 +67,8 @@ class GoldenRetriever:
                 self.cost = triplet_loss(self.question_embeddings['outputs'], self.response_embeddings['outputs'], self.neg_response_embeddings['outputs'], margin=self.margin)
             elif self.loss=='cosine':
                 self.cost = tf.losses.cosine_distance(self.question_embeddings['outputs'], self.response_embeddings['outputs'], axis=1)
+            elif self.loss=='contrastive':
+                self.cost = contrastive_loss(self.label, self.question_embeddings['outputs'], self.response_embeddings['outputs'], margin=self.margin)
             else: raise NotImplementedError('invalid loss selected. Choose either triplet or cosine.')
             opt = tf.train.GradientDescentOptimizer(learning_rate=self.lr)
             var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
@@ -77,7 +81,8 @@ class GoldenRetriever:
         print('model initiated!')
     
     def predict(self, text, context=None, type='response'):
-        """Return the tensor representing embedding of input text."""
+        """Return the tensor representing embedding of input text.
+        Type can be 'query' or 'response' """
         if type=='query':
             return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
         elif type=='response':
@@ -89,20 +94,22 @@ class GoldenRetriever:
             })['outputs']
         else: print('Type of prediction not defined')
 
-    def finetune(self, question, answer, context, neg_answer=[], neg_answer_context=[]):
+    def finetune(self, question, answer, context, neg_answer=[], neg_answer_context=[], label=[]):
         current_loss = self.session.run(self.cost, feed_dict={
             self.question:question,
             self.response:answer,
             self.response_context:context,
             self.neg_response:neg_answer,
-            self.neg_response_context:neg_answer_context
+            self.neg_response_context:neg_answer_context,
+            self.label:label
             })
         self.session.run(self.opt_op, feed_dict={
             self.question:question,
             self.response:answer,
             self.response_context:context,
             self.neg_response:neg_answer,
-            self.neg_response_context:neg_answer_context
+            self.neg_response_context:neg_answer_context,
+            self.label:label
             })
         return current_loss
         
@@ -119,11 +126,13 @@ class GoldenRetriever:
     def close(self):
         self.session.close()
 
-    def load_kb(self, path_to_kb=None, text_list=None, is_faq=False):
+    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, is_faq=False):
         """Give either path to .txt document or list of clauses.
         For text document, each clause is separated by 2 newlines (\n)"""
         if text_list:
             self.text = text_list
+            if is_faq:
+                self.questions = question_list
         else:
             if is_faq:
                 self.text, self.questions = split_txt(read_txt(path_to_kb), is_faq)

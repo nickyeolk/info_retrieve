@@ -1,8 +1,8 @@
 # from tensorflow.python.ops import array_ops
 from tensorflow.losses import cosine_distance
 import tensorflow as tf
-
-
+# from tensorflow.python.ops import math_ops
+from tensorflow.python.framework import dtypes
 
 def triplet_loss(anchor_vector, positive_vector, negative_vector, metric='cosine_dist', margin=0.009):
     """Computes the triplet loss with semi-hard negative mining.
@@ -28,58 +28,31 @@ def triplet_loss(anchor_vector, positive_vector, negative_vector, metric='cosine
     loss = tf.reduce_mean(loss)
     return loss
 
-#   # Build pairwise squared distance matrix.
-#   pdist_matrix = cosine_distance(embeddings)
-#   # Build pairwise binary adjacency matrix.
-#   adjacency = math_ops.equal(labels, array_ops.transpose(labels))
-#   # Invert so we can select negatives only.
-#   adjacency_not = math_ops.logical_not(adjacency)
 
-#   batch_size = array_ops.size(labels)
-
-#   # Compute the mask.
-#   pdist_matrix_tile = array_ops.tile(pdist_matrix, [batch_size, 1])
-#   mask = math_ops.logical_and(
-#       array_ops.tile(adjacency_not, [batch_size, 1]),
-#       math_ops.greater(
-#           pdist_matrix_tile, array_ops.reshape(
-#               array_ops.transpose(pdist_matrix), [-1, 1])))
-#   mask_final = array_ops.reshape(
-#       math_ops.greater(
-#           math_ops.reduce_sum(
-#               math_ops.cast(mask, dtype=dtypes.float32), 1, keepdims=True),
-#           0.0), [batch_size, batch_size])
-#   mask_final = array_ops.transpose(mask_final)
-
-#   adjacency_not = math_ops.cast(adjacency_not, dtype=dtypes.float32)
-#   mask = math_ops.cast(mask, dtype=dtypes.float32)
-
-#   # negatives_outside: smallest D_an where D_an > D_ap.
-#   negatives_outside = array_ops.reshape(
-#       masked_minimum(pdist_matrix_tile, mask), [batch_size, batch_size])
-#   negatives_outside = array_ops.transpose(negatives_outside)
-
-#   # negatives_inside: largest D_an.
-#   negatives_inside = array_ops.tile(
-#       masked_maximum(pdist_matrix, adjacency_not), [1, batch_size])
-#   semi_hard_negatives = array_ops.where(
-#       mask_final, negatives_outside, negatives_inside)
-
-#   loss_mat = math_ops.add(margin, pdist_matrix - semi_hard_negatives)
-
-#   mask_positives = math_ops.cast(
-#       adjacency, dtype=dtypes.float32) - array_ops.diag(
-#           array_ops.ones([batch_size]))
-
-#   # In lifted-struct, the authors multiply 0.5 for upper triangular
-#   #   in semihard, they take all positive pairs except the diagonal.
-#   num_positives = math_ops.reduce_sum(mask_positives)
-
-#   triplet_loss = math_ops.truediv(
-#       math_ops.reduce_sum(
-#           math_ops.maximum(
-#               math_ops.multiply(loss_mat, mask_positives), 0.0)),
-#       num_positives,
-#       name='triplet_semihard_loss')
-
-#   return triplet_loss
+def contrastive_loss(labels, embeddings_anchor, embeddings_positive,
+                     margin=1.0):
+  """Computes the contrastive loss.
+  This loss encourages the embedding to be close to each other for
+    the samples of the same label and the embedding to be far apart at least
+    by the margin constant for the samples of different labels.
+  See: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+  Args:
+    labels: 1-D tf.int32 `Tensor` with shape [batch_size] of
+      binary labels indicating positive vs negative pair.
+    embeddings_anchor: 2-D float `Tensor` of embedding vectors for the anchor
+      images. Embeddings should be l2 normalized.
+    embeddings_positive: 2-D float `Tensor` of embedding vectors for the
+      positive images. Embeddings should be l2 normalized.
+    margin: margin term in the loss definition.
+  Returns:
+    contrastive_loss: tf.float32 scalar.
+  """
+  # Get per pair distances
+  distances = cosine_distance(embeddings_anchor, embeddings_positive, axis=1)
+  # Add contrastive loss for the siamese network.
+  #   label here is {0,1} for neg, pos.
+  return tf.reduce_mean(
+      tf.cast(labels, dtypes.float32) * distances +
+      (1. - tf.cast(labels, dtypes.float32)) *
+      tf.maximum(margin - distances, 0.),
+      name='contrastive_loss')
