@@ -100,9 +100,9 @@ def scorer(predictions, gts, k=3):
         total+=1
     return score/total
 
-def make_pred(row, gr, query_col_name='queries'):
+def make_pred(row, gr, query_col_name='queries', top_k=3):
     """Make line by line predictions, returns top 3 index of kb."""
-    txt, ind = gr.make_query(row['queries'], top_k=3, index=True)
+    txt, ind = gr.make_query(row['queries'], top_k=top_k, index=True)
     return ind
 
 def make_iscorr(row, prediction_col_name='predictions', answer_col_name='answer'):

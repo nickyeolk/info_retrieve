@@ -12,25 +12,35 @@
 		<div class = "jumbotron jumbotron-fluid">
             <h1 class="display-4">GoldenRetriever</h1>
             <p class="lead">The GoldenRetriever demo allows you to query an FAQ and a T&C knowledge base.</p>
+            <p><a href = "https://github.com/nickyeolk/info_retrieve">Repo here!</a></p>
 		</div>
 		<div class="container">
-			<p>Ask the GoldenRetriever a question</p>
-			<p><a href = "https://github.com/nickyeolk/info_retrieve">Repo here!</a> </p>
             <form action = "/predict" method = "GET">
-                <select name="kbname">
+                <label for="exampleFormControlSelect1">Knowledge Base</label>
+                <select name="kbname" class="form-control" id="exampleFormControlSelect1">
                     <option value="aiap">AIAP</option>
+                    <option value="nrf">NRF Fund Guide</option>
                     <option value="resale_tnc">HDB Resale</option>
                     <!-- <option value="pdpa">PDPA</option> -->
                 </select><br>
-			    <input type = "textarea" name = "question"/>
+                <label for="exampleFormControlSelect2">Number of Results</label>
+                <select name = "top_k" class="form-control" id="exampleFormControlSelect2">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                </select><br>
+                <label for="exampleFormControlTextarea1">Enter Query</label>
+			    <textarea name = "question" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea><br>
 			    <input type = "submit" class="btn btn-info"/>
 			</form>
 			<br>
             {% if prediction %}     
             <h2><text>Question: </text>{{question}}</h2>
-			<h2><text>Answer: </text>
-			{{prediction}}</h2><br>
-            <h2>Confidence: {{rating}}</h2><br>
+            {% for result in prediction %}
+                <h2><text>Answer {{loop.index}}:</text></h2>
+                <h2>{{result}}</h2><br>
+            {% endfor %}
+            <!-- <h2>Confidence: {{rating}}</h2><br> -->
 			{% endif %}
 		</div>
 	</div>

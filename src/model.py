@@ -31,6 +31,8 @@ class GoldenRetriever:
         self.lr = lr
         self.margin = margin
         self.loss = loss
+        self.vectorized_knowledge = {}
+        self.text = {}
         # Set up graph.
         tf.reset_default_graph() # finetune
         g = tf.Graph()
@@ -126,27 +128,30 @@ class GoldenRetriever:
     def close(self):
         self.session.close()
 
-    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, is_faq=False):
+    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, is_faq=False, kb_name='default_kb'):
         """Give either path to .txt document or list of clauses.
         For text document, each clause is separated by 2 newlines (\n)"""
         if text_list:
-            self.text = text_list
+            self.text[kb_name] = text_list
             if is_faq:
-                self.questions = question_list
+                self.questions[kb_name] = question_list
         else:
             if is_faq:
-                self.text, self.questions = split_txt(read_txt(path_to_kb), is_faq)
+                self.text[kb_name], self.questions = split_txt(read_txt(path_to_kb), is_faq)
             else:
-                self.text = split_txt(read_txt(path_to_kb), is_faq)
-        self.vectorized_knowledge = self.predict(self.text, type='response')
+                self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
+        self.vectorized_knowledge[kb_name] = self.predict(self.text[kb_name], type='response')
         print('knowledge base lock and loaded!')
 
-    def make_query(self, querystring, top_k=5, index=False):
-        """choose index=True to return sorted index of matches"""
-        similarity_score=cosine_similarity(self.vectorized_knowledge, self.predict([querystring], type='query'))
+    def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
+        """Make a query against the stored vectorized knowledge. 
+        Choose index=True to return sorted index of matches.
+        type can be 'query' or 'response' if you are comparing statements
+        """
+        similarity_score=cosine_similarity(self.vectorized_knowledge[kb_name], self.predict([querystring], type=predict_type))
         sortargs=np.flip(similarity_score.argsort(axis=0))
         sortargs=[x[0] for x in sortargs]
-        sorted_ans=[self.text[i] for i in sortargs]
+        sorted_ans=[self.text[kb_name][i] for i in sortargs]
         if index:
             return sorted_ans[:top_k], sortargs[:top_k]
         return sorted_ans[:top_k], similarity_score[sortargs[:top_k]]
