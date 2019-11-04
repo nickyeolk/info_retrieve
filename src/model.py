@@ -4,7 +4,7 @@ import numpy as np
 import tf_sentencepiece
 from .metric_learning import triplet_loss, contrastive_loss
 from tensorflow.train import Saver
-from .utils import split_txt, read_txt
+from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
 
 class GoldenRetriever:
@@ -33,12 +33,13 @@ class GoldenRetriever:
         self.loss = loss
         self.vectorized_knowledge = {}
         self.text = {}
+        self.questions = {}
         # Set up graph.
         tf.reset_default_graph() # finetune
         g = tf.Graph()
         with g.as_default():
-            self.embed = hub.Module("./google_use_qa", trainable=True)
-            # self.embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/1", trainable=True)
+            # self.embed = hub.Module("./google_use_qa", trainable=True)
+            self.embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/1", trainable=True)
             # put placeholders
             self.question = tf.placeholder(dtype=tf.string, shape=[None])  # question
             self.response = tf.placeholder(dtype=tf.string, shape=[None])  # response
@@ -128,7 +129,8 @@ class GoldenRetriever:
     def close(self):
         self.session.close()
 
-    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, is_faq=False, kb_name='default_kb'):
+    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
+                is_faq=False, kb_name='default_kb'):
         """Give either path to .txt document or list of clauses.
         For text document, each clause is separated by 2 newlines (\n)"""
         if text_list:
@@ -137,11 +139,18 @@ class GoldenRetriever:
                 self.questions[kb_name] = question_list
         else:
             if is_faq:
-                self.text[kb_name], self.questions = split_txt(read_txt(path_to_kb), is_faq)
+                self.text[kb_name], self.questions[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
             else:
                 self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
-        self.vectorized_knowledge[kb_name] = self.predict(self.text[kb_name], type='response')
+        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base lock and loaded!')
+
+    def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
+                    query_col='question', answer_str_col='answer', cutoff=None):
+        self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
+                            query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
+        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
+        print('knowledge base (csv) lock and loaded!')
 
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
         """Make a query against the stored vectorized knowledge. 

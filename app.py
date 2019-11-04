@@ -3,10 +3,11 @@ from src.model import GoldenRetriever
 app = Flask(__name__)
 
 gr = GoldenRetriever()
-gr.restore('./google_use_nrf_tuned/variables-0')
+gr.restore('./google_use_nrf_pdpa_tuned/variables-0')
 gr.load_kb(path_to_kb='./data/aiap.txt', is_faq=True, kb_name='aiap')
 gr.load_kb(path_to_kb='./data/resale_tnc.txt', kb_name='resale_tnc')
 gr.load_kb(path_to_kb='./data/fund_guide_tnc_full.txt', kb_name='nrf')
+gr.load_csv_kb(path_to_kb='./data/pdpa.csv', cutoff=196, kb_name='pdpa')
 
 @app.route('/')
 def landing():

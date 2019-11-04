@@ -31,6 +31,12 @@ def read_txt(path):
         text = f.readlines()
     return text
 
+def clean_txt(text):
+    """Strips formatting"""
+    text=[x.replace('\n', '. ') for x in text] # not sure how newlines are tokenized
+    text=[x.replace('.. ', '. ').rstrip() for x in text] # remove artifact
+    return text
+
 def split_txt(text, qa=False):
     """Splits a text document into clauses based on whitespaces. 
     Additionally, reads a faq document by assuming that the first line is a question 
@@ -47,12 +53,20 @@ def split_txt(text, qa=False):
         else: stringg+=tex
     if qa:
         condition_context = [x.split('\n')[0] for x in condition_terms]
-        condition_terms = [' '.join(x.split('\n')[1:]) for x in condition_terms]
-    condition_terms=[x.replace('\n', '. ') for x in condition_terms] # not sure how newlines are tokenized
-    condition_terms=[x.replace('.. ', '. ').rstrip() for x in condition_terms] # remove artifact
-    if qa:
+        condition_terms = ['\n'.join(x.split('\n')[1:]) for x in condition_terms]
         return condition_terms, condition_context
     else: return condition_terms
+
+def read_kb_csv(csv_path, meta_col='meta', answer_col='answer', query_col='question', answer_str_col='answer', cutoff=None):
+    """Only read organization meta, not personal. index=196"""
+    df = pd.read_csv(csv_path)
+    if cutoff:
+        df = df.iloc[:cutoff]
+    df['kb'] = df[meta_col]+df[answer_col]
+    df.rename(columns={query_col:'queries', answer_str_col:'answer_str'}, inplace=True)
+    # df[answer_col] = [[x] for x in df.index]
+    # df['kb']=df['kb'].str.replace('\n', '. ').replace('.. ', '. ')
+    return list(df['kb']), list(df['queries'])
 
 def aiap_qna(question, answer_array, aiap_qa, model, k=1):
     similarity_score=cosine_similarity(answer_array, model.predict([question], type='query'))
