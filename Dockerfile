@@ -5,6 +5,8 @@ RUN pip install flask \
 && pip install tensorflow-hub \
 && pip install pandas \
 && pip install scikit-learn \
-&& pip install tf-sentencepiece
+&& pip install tf-sentencepiece \
+&& wget https://finetunedweights.blob.core.windows.net/finetuned01/google_use_nrf_pdpa_tuned.tar.gz \
+&& tar -zxvf google_use_nrf_pdpa_tuned.tar.gz
 CMD ["python", "app.py"]
 
