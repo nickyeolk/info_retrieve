@@ -15,6 +15,10 @@ This method can be used to overfit towards any fixed FAQ dataset without losing 
 
 # Deployment
 This model is implemented as a flask app. Run `python app.py` to launch a web interface from which you can query some pre-set documents.
+You can run it via docker as well. After cloning the repo  
+1. `docker build -t goldenretriever .`  
+2. `docker run -p 5000:5000 goldenretriever`  
+to run the app locally.
 
 # Testing
 Currently, 3 sentence encoding models are compared against the test set of the [InsuranceQA corpus](https://github.com/shuzi/insuranceQA). Each test case consists of a question, and 100 possible answers, of which the correct answer is one or more of the 100 possible answers. Model evaluation metric is accuracy@k, where the score is 1 if the top k matches contain the target answer, and 0 otherwise.
