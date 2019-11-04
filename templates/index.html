@@ -18,7 +18,7 @@
             <form action = "/predict" method = "GET">
                 <label for="exampleFormControlSelect1">Knowledge Base</label>
                 <select name="kbname" class="form-control" id="exampleFormControlSelect1">
-                    <!-- <option value="nrf">NRF Fund Guide</option> -->
+                    <option value="nrf">NRF Fund Guide</option>
                     <option value="pdpa">PDPA</option>
                     <option value="resale_tnc">HDB Resale</option>
                     <option value="aiap">AIAP</option>
@@ -42,7 +42,7 @@
                 {% set lines = result.split('\n') %}
                 {% for line in lines %}
                     <tr>
-                        {% set tabledatas = line.split(';')%}
+                        {% set tabledatas = line.split(';;')%}
                         {% for tabledata in tabledatas %}
                         {% if tabledatas|length > 1 %}
                             <td>{{tabledata}}</td>
