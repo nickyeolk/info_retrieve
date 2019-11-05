@@ -1,5 +1,5 @@
 # GoldenRetriever - Information retrieval using fine-tuned semantic similarity
-## GoldenRetriever is part of the HotDoc project, which provides a series of open-source AI tools for natural language processing. They are part of the [AI Makerspace program](https://makerspace.aisingapore.org/) 
+## GoldenRetriever is part of the HotDoc project, which provides a series of open-source AI tools for natural language processing. They are part of the [AI Makerspace program](https://makerspace.aisingapore.org/). Please visit the [demo page](https://goldenretriever.azurewebsites.net/) where you will be able to query a sample knowledge base. 
 Framework for a information retrieval engine (QnA, knowledge base query, etc)  
 Step 1: The knowledge base has to be separated into documents. Each document is an indexed unit of information e.g. a clause, a sentence, a paragraph.  
 Step 2: The clauses (and query) are encoded with the same encoder (Infersent, Google USE, Google USE-QA)  
