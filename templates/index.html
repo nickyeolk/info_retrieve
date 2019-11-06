@@ -18,7 +18,7 @@
             <form action = "/predict" method = "GET">
                 <label for="exampleFormControlSelect1">Knowledge Base</label>
                 <select name="kbname" class="form-control" id="exampleFormControlSelect1">
-                    <!-- <option value="nrf">NRF Fund Guide</option> -->
+                    <option value="nrf">NRF Fund Guide</option>
                     <option value="pdpa">PDPA</option>
                     <option value="resale_tnc">HDB Resale</option>
                     <option value="aiap">AIAP</option>
@@ -38,7 +38,7 @@
             <h3><text>Question: </text>{{question}}</h3>
             {% for result in prediction %}
                 <h3><p><text>Answer {{loop.index}}:</text></p></h3>
-                <table class="table table-hover">
+                <table class="table table-hover table-bordered">
                 {% set lines = result.split('\n') %}
                 {% for line in lines %}
                     <tr>
