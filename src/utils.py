@@ -130,14 +130,14 @@ def make_closewrong(row, prediction_col_name='predictions', answer_col_name='ans
     try: return [x for x in row[prediction_col_name] if x not in row[answer_col_name]][0]
     except: return 1 #Just return the most common class as the negative eg.
     
-def make_finetune(row, gr, query_col_name='queries', answer_col_name='answer', closewrong_col_name='closewrong'):
+def make_finetune(row, gr, kb_name='default_kb', query_col_name='queries', answer_col_name='answer', closewrong_col_name='closewrong'):
     """Stochastic finetuning sample by sample."""
-    loss = gr.finetune([row[query_col_name]], [gr.text[row[answer_col_name][0]]], [gr.text[row[answer_col_name][0]]], [gr.text[row[closewrong_col_name]]], [gr.text[row[closewrong_col_name]]])
+    loss = gr.finetune([row[query_col_name]], [gr.text[kb_name][row[answer_col_name][0]]], [gr.text[kb_name][row[answer_col_name][0]]], [gr.text[kb_name][row[closewrong_col_name]]], [gr.text[kb_name][row[closewrong_col_name]]])
     print(loss)
     
-def make_contrastive_finetune(row, gr, query_col_name='queries', answer_col_name='answer', closewrong_col_name='closewrong'):
+def make_contrastive_finetune(row, gr, kb_name='default_kb', query_col_name='queries', answer_col_name='answer', closewrong_col_name='closewrong'):
     """Stochastic finetuning for contrastive loss."""
-    loss = gr.finetune(question=[row[query_col_name]], answer=[gr.text[row[answer_col_name][0]]], context=[gr.text[row[answer_col_name][0]]], label=[1])
+    loss = gr.finetune(question=[row[query_col_name]], answer=[gr.text[kb_name][row[answer_col_name][0]]], context=[gr.text[kb_name][row[answer_col_name][0]]], label=[1])
     print('1: ', loss)
-    loss = gr.finetune(question=[row[query_col_name]], answer=[gr.text[row[closewrong_col_name]]], context=[gr.text[row[closewrong_col_name]]], label=[0])
+    loss = gr.finetune(question=[row[query_col_name]], answer=[gr.text[kb_name][row[closewrong_col_name]]], context=[gr.text[kb_name][row[closewrong_col_name]]], label=[0])
     print('0: ', loss)
