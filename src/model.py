@@ -130,18 +130,21 @@ class GoldenRetriever:
         self.session.close()
 
     def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
-                is_faq=False, kb_name='default_kb'):
+                raw_text=None, is_faq=False, kb_name='default_kb'):
         """Give either path to .txt document or list of clauses.
         For text document, each clause is separated by 2 newlines (\n)"""
         if text_list:
             self.text[kb_name] = text_list
             if is_faq:
                 self.questions[kb_name] = question_list
-        else:
+        elif path_to_kb:
             if is_faq:
                 self.text[kb_name], self.questions[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
             else:
                 self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
+        elif raw_text:
+            self.text[kb_name] = split_txt(raw_text)
+        else: raise NameError('invalid kb input!')
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base lock and loaded!')
 

@@ -24,11 +24,15 @@ def format_func(kb_name):
                 'aiap':'AIAP',
                 'nrf':'NRF'}
     return namedicts[kb_name]
-kb = st.selectbox('Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'nrf'],
+kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'nrf'],
                     format_func=format_func)
+kb_raw = st.text_area(label='OR Paste raw text (terms separated by empty line)')
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value='Can an organization retain the physical NRIC?')
 if st.button('Fetch'):
+    if kb_raw:
+        gr.load_kb(raw_text=kb_raw, kb_name='raw_kb')
+        kb = 'raw_kb'
     prediction, scores = gr.make_query(data, top_k=int(top_k), kb_name=kb)
     qn_string="""<h3><text>Question: </text>{}</h3>""".format(data)
     st.markdown(qn_string, unsafe_allow_html=True)
@@ -51,3 +55,18 @@ if st.button('Fetch'):
         reply_string+="""</table><br>"""
         st.markdown(reply_string, unsafe_allow_html=True)
 
+st.markdown(
+"""
+<details><summary>Sample sentences</summary>
+<strong>PDPA</strong>
+<p>How long can an organisation retain its customers' personal data?</p>
+<strong>HDB resale terms and conditions</strong>
+<p>Do I need to pay back CPF?</p>
+<strong>AIAP</strong>
+<p>Do I need to pay for the program?</p>
+<strong>NRF</strong>
+<p>Can I vire from EOM into travel?</p>
+<strong>Raw text </strong><a href="https://www.straitstimes.com/asia/east-asia/china-wants-centralised-digital-currency-after-bitcoin-crackdown" target="_blank">China Digital Currency</a><i> (Select all, copy, and paste into raw text box)</i>
+<p>Is it decentralized?</p>
+</details>"""
+, unsafe_allow_html=True)
