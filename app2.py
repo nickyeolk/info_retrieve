@@ -18,21 +18,28 @@ st.title('GoldenRetriever')
 st.header('The GoldenRetriever demo allows you to query an FAQ and a T&C knowledge base.')
 st.markdown('[Visit the Repo here!](https://github.com/nickyeolk/info_retrieve)')
 
+kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
+                'resale_tnc':"How much is the option fee?",
+                'aiap':"Do I need to pay for the program?",
+                'nrf':"Can I vire from EOM into travel?",
+                'raw_kb':" "}
+
 def format_func(kb_name):
     namedicts={'pdpa':'PDPA',
                 'resale_tnc':'HDB Resale',
                 'aiap':'AIAP',
-                'nrf':'NRF'}
+                'nrf':'NRF',
+                'raw_kb':'Paste Raw Text'}
     return namedicts[kb_name]
-kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'nrf'],
+kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'nrf', 'raw_kb'],
                     format_func=format_func)
-kb_raw = st.text_area(label='OR Paste raw text (terms separated by empty line)')
+if kb=='raw_kb':
+    kb_raw = st.text_area(label='Paste raw text (terms separated by empty line)')
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
-data = st.text_input(label='Input query here', value='Can an organization retain the physical NRIC?')
+data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
 if st.button('Fetch'):
-    if kb_raw:
+    if kb=='raw_kb':
         gr.load_kb(raw_text=kb_raw, kb_name='raw_kb')
-        kb = 'raw_kb'
     prediction, scores = gr.make_query(data, top_k=int(top_k), kb_name=kb)
     qn_string="""<h3><text>Question: </text>{}</h3>""".format(data)
     st.markdown(qn_string, unsafe_allow_html=True)
@@ -63,10 +70,10 @@ st.markdown(
 <strong>HDB resale terms and conditions</strong>
 <p>Do I need to pay back CPF?</p>
 <strong>AIAP</strong>
-<p>Do I need to pay for the program?</p>
+<p>What will be covered during the program?</p>
 <strong>NRF</strong>
-<p>Can I vire from EOM into travel?</p>
+<p>Can I hire foreign researchers?</p>
 <strong>Raw text </strong><a href="https://www.straitstimes.com/asia/east-asia/china-wants-centralised-digital-currency-after-bitcoin-crackdown" target="_blank">China Digital Currency</a><i> (Select all, copy, and paste into raw text box)</i>
-<p>Is it decentralized?</p>
+<p>Which electronic payment gateways support the currency?</p>
 </details>"""
 , unsafe_allow_html=True)
