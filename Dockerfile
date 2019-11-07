@@ -6,8 +6,9 @@ RUN pip install flask \
 && pip install pandas \
 && pip install scikit-learn \
 && pip install tf-sentencepiece \
+&& pip install streamlit \
 && apt-get -y install wget \
 && wget https://finetunedweights.blob.core.windows.net/finetuned01/google_use_nrf_pdpa_tuned.tar.gz \
 && tar -zxvf google_use_nrf_pdpa_tuned.tar.gz
-CMD ["python", "app.py"]
+CMD ["streamlit", "run", "--server.port", "5000", "app2.py"]
 

@@ -11,15 +11,15 @@ EOM
 6. Funding of research staff under the grant must comply with prevailing and consistently applied human resource guidelines of the employing Host/Partner Institution(s), regardless of the source of funds. 
 7. For manpower-related fund requisitions, update of all staff employed under the project must be provided, including those whose employment has ended. 
 26. Grantor delegates the approval authority for manpower changes (i.e. increase/decrease in headcount, change in designation or scheme of projected hires, change in time commitment to the grant) to the Host Institution. Any virement into the EOM vote will require Grantor’s approval. Updates should be provided when the fund requisition form is submitted to the Grantor.
-General policy: The general principle is that grants should support EOM costs and related benefits (as per employment contract) as long as it is in line with the consistently applied Host Institution’s HR policies. This will extend to Host Institution policies that govern staff recruitment and related costs (e.g. costs associated with the onboarding of staff, staff insurance, overtime claims, staff relocation, employment benefits, employment levy, employment pass, pre-examination medical check-up and housing allowance.) All Manpower related costs that fall under Other Operating Costs (OOE) should be accurately reflected in the Budget. Fractional charging for staff costs based on time commitment to the project must be practised. 
-Principal Investigators / Co-Investigators / Programme Managers EOM cost: Not allowable.
-Unconsumed leave: Provision for unconsumed leave is not allowable.
-Student Assistants / Interns: Not allowable for students who are recipients of existing awards (or stipends) or students who are not residents of Singapore. Only full-time students enrolled in local institutes of higher learning qualify to be supported as a student assistant/intern.
+General policy;; The general principle is that grants should support EOM costs and related benefits (as per employment contract) as long as it is in line with the consistently applied Host Institution’s HR policies. This will extend to Host Institution policies that govern staff recruitment and related costs (e.g. costs associated with the onboarding of staff, staff insurance, overtime claims, staff relocation, employment benefits, employment levy, employment pass, pre-examination medical check-up and housing allowance.) All Manpower related costs that fall under Other Operating Costs (OOE) should be accurately reflected in the Budget. Fractional charging for staff costs based on time commitment to the project must be practised. 
+Principal Investigators / Co-Investigators / Programme Managers EOM cost;; Not allowable.
+Unconsumed leave;; Provision for unconsumed leave is not allowable.
+Student Assistants / Interns;; Not allowable for students who are recipients of existing awards (or stipends) or students who are not residents of Singapore. Only full-time students enrolled in local institutes of higher learning qualify to be supported as a student assistant/intern.
 
 
 Overseas Travel Related Expenses
 15. It is the responsibility of the Lead PI/Co-Is to ensure that all travel expenses are in line with the Institutions’ consistently applied policy on travel, regardless of the source of funds. The Host Institution and Partner Institutions are to ensure that any travel undertaken is in relation to the grant only and for no other purpose.
-General policy: Not allowable unless specifically provided for in the grant and approved by the Grantor. Conference participation should be directly relevant to the research area outlined in the project and necessary to accomplish project objectives. All travel must align to the existing and consistently applied institutions’ travel policies regardless of the source of funds.
+General policy;; Not allowable unless specifically provided for in the grant and approved by the Grantor. Conference participation should be directly relevant to the research area outlined in the project and necessary to accomplish project objectives. All travel must align to the existing and consistently applied institutions’ travel policies regardless of the source of funds.
 
 
 Equipment and Other Operating Expenses (OOE)
@@ -27,20 +27,20 @@ Equipment and Other Operating Expenses (OOE)
 12. All items claimed must comply with the Institution’s internal procurement processes, guidelines and policies.
 13. Grantor’s approval must be sought prior to purchasing new equipment/OOE items that is not in the approved budget.
 14. Grantor reserves the right to reject variation requests made retrospectively for equipment/OOE items not listed in the Letter of Award.
-General policy: No purchase of equipment is allowed unless specifically provided for in the grant approved by the Grantor. The procurement of such equipment must be made according to the formal established and consistently applied policies of the Host Institution. The invoices for all claims must be dated before the end of the Term.
-Cost of capital works, general infrastructure, general purpose IT and communication equipment, office equipment, and furniture and fittings: Not allowable under direct costs, unless specifically provided for in the grant and approved by the Grantor. Examples of such costs are computers, PDAs, mobile phones, photocopier machines, workstations, printers, etc.
+General policy;; No purchase of equipment is allowed unless specifically provided for in the grant approved by the Grantor. The procurement of such equipment must be made according to the formal established and consistently applied policies of the Host Institution. The invoices for all claims must be dated before the end of the Term.
+Cost of capital works, general infrastructure, general purpose IT and communication equipment, office equipment, and furniture and fittings;; Not allowable under direct costs, unless specifically provided for in the grant and approved by the Grantor. Examples of such costs are computers, PDAs, mobile phones, photocopier machines, workstations, printers, etc.
 OOE Related Expenses
-General policy: Not allowable for expenses that are not directly related to the Research. All procurement of such items must be made according to the formal established and consistently applied policies of the Host Institution. 
-Visiting Professors/Experts: Not allowable unless specifically provided for in the grant and approved by the Grantor. The visiting professor must be identified and his/her contribution to the project must be clearly defined and described in the proposal. 
-Audit fees: Not allowable. This includes both internal and external audit fees.
-Entertainment & Refreshment: Not allowable.
-Fines and Penalties: Not allowable.
-Legal Fees: Not allowable.
-Overhead Expenses: Not allowable unless specifically provided for in the grant and approved by the Grantor based on the nature of the research. This includes rental, utilities, facilities management, telephone charges, internet charges, etc.
-Patent Application: Not allowable. This includes patent application filing, maintenance and other related cost.
-Software: Not allowable under direct cost unless specifically provided for in the grant and approved by the Grantor.
-Professional fees (including fees to consultants): Not allowable unless specifically provided for in the grant and approved by the Grantor.
-Staff retreat: Not allowed.
+General policy;; Not allowable for expenses that are not directly related to the Research. All procurement of such items must be made according to the formal established and consistently applied policies of the Host Institution. 
+Visiting Professors/Experts;; Not allowable unless specifically provided for in the grant and approved by the Grantor. The visiting professor must be identified and his/her contribution to the project must be clearly defined and described in the proposal. 
+Audit fees;; Not allowable. This includes both internal and external audit fees.
+Entertainment & Refreshment;; Not allowable.
+Fines and Penalties;; Not allowable.
+Legal Fees;; Not allowable.
+Overhead Expenses;; Not allowable unless specifically provided for in the grant and approved by the Grantor based on the nature of the research. This includes rental, utilities, facilities management, telephone charges, internet charges, etc.
+Patent Application;; Not allowable. This includes patent application filing, maintenance and other related cost.
+Software;; Not allowable under direct cost unless specifically provided for in the grant and approved by the Grantor.
+Professional fees (including fees to consultants);; Not allowable unless specifically provided for in the grant and approved by the Grantor.
+Staff retreat;; Not allowed.
 
 
 Audit and Progress Reports 
@@ -62,8 +62,8 @@ Grant Extension
 
 
 Research Scholarship
-General policy: Not allowable unless specifically provided for in the grant and approved by the Grantor. Postgraduate stipend must align with the prevailing rates set by the Ministry of Education. Postgraduate stipend and tuition support will not attract indirect costs. 
-Undergraduate stipend and tuition support: Not allowable.
+General policy;; Not allowable unless specifically provided for in the grant and approved by the Grantor. Postgraduate stipend must align with the prevailing rates set by the Ministry of Education. Postgraduate stipend and tuition support will not attract indirect costs. 
+Undergraduate stipend and tuition support;; Not allowable.
 
 
 Requests for variations to the awarded grant
@@ -142,7 +142,7 @@ Each Institution shall abide by the following guidelines when engaging in collab
 17.1 The Institutions may undertake work on the Research in collaboration with a Collaborator subject to this Clause 17. Notwithstanding Clause 2.5, the Institutions may also receive funds or any other means of support from a Collaborator for carrying out the research in accordance with this Clause 17.
 17.2 The applicable Institutions shall, prior to commencing their collaboration with a Collaborator, enter into a written agreement with such Collaborator which is consistent with the obligations assumed under this Contract setting out, among other things: -
 (a)	the role of the Collaborator in the Research;
-(b)	the provision of cash or in-kind contributions by the Collaborator for the Research; and
+(b)	the provision of cash or in-kind contributions by the Collaborator for the Research;
 (c)	the work to be undertaken by the Collaborator and its scientific contributions.
 17.3 All agreements with Collaborators must conform with the Collaboration Guidelines specified in the Annex. For the avoidance of doubt, Collaborators are not entitled to receive (directly or indirectly) any or any part of the Funds. The Host Institution shall keep Grantor informed of the progress on the work under the collaboration through the Yearly Progress Reports and the Final Progress Report.
 17.4 The Host Institution shall be responsible for providing Grantor with copies of the relevant collaboration agreement between the Collaborator and the applicable Institutions including all amendments, modifications or revisions thereto.
@@ -154,10 +154,10 @@ Each Institution shall abide by the following guidelines when engaging in collab
 24.2 Save where expressly superseded, if any part of this Contract conflicts with any other part, that part higher in the following list shall take precedence: -
 (a)	the terms  and conditions contained  in the clauses  of  these Terms  and Conditions of A Competitive Grant;
 (b)	the Annex(es);
-(c)	the Letter of Award;
+(c)	the Letter of Award
 (d)	Approved Proposal;
 (e)	Application;
-(f)	Guidelines; and
+(f)	Guidelines;
 (g)	Policies.
 
 
@@ -217,7 +217,7 @@ The Institutions warrant that the information contained in the Application, all 
 (f) omission of information on other funding sources for the Research;
 (g) false or inaccurate claims that proper approvals (including IRB approvals) have been obtained;
 (h) false or inaccurate reports on the progress of the Research and achievement of Milestones and Deliverables;
-(i) false or inaccurate reports on the status of collaborations with third parties relating to the Research; and
+(i) false or inaccurate reports on the status of collaborations with third parties relating to the Research;
 (j) false claims in the publication record, such as, describing a paper as being published even though it has only been submitted for publication.
 
 
@@ -240,7 +240,7 @@ Administration of the Funding
 (j) ensuring that the work under the Research complies with all relevant current laws, government rules and regulations and other applicable guidelines and procedures including those introduced while the work is in progress;
 (k) ensuring that all Research Personnel involved in animal research and in the breeding, housing and care of animals, are properly trained and supervised;
 (l) ensuring that Grantor is immediately notified in writing of any development that will adversely affect the progress of the Research;
-(m) ensuring that Grantor is immediately notified in writing upon cessation by any Investigator of active involvement in the Research or long leave of absence (e.g. sabbatical); and
+(m) ensuring that Grantor is immediately notified in writing upon cessation by any Investigator of active involvement in the Research or long leave of absence (e.g. sabbatical);
 (n) ensuring that Grantor is immediately notified in writing if any work carried out using the Funding diverges materially from the Approved Proposal.
 
 
@@ -282,21 +282,21 @@ Each Institution shall return all unused funds (applicable for advance disbursem
 Access to Premises and Records
 Pursuant to Clause 9.3, the Institutions shall, at all reasonable times during the Term and for seven (7) years after the expiration or termination of this Contract, grant Grantor and its authorized representatives: -
 (a)	unhindered access to: -
-(i)	the Research Personnel;
-(ii)	premises occupied by the Institutions;
-(iii)	the Assets and Materials;
-(iv)	all accounts, records and documents in relation to the Research and Funding and its administration; and
+(i)	the Research Personnel
+(ii)	premises occupied by the Institutions
+(iii)	the Assets and Materials
+(iv)	all accounts, records and documents in relation to the Research and Funding and its administration;
 (b)	reasonable assistance to:
-(i)	inspect the performance of the Research;
+(i)	inspect the performance of the Research
 (ii)	locate and inspect any accounts, records and documents in relation to the Research and Funding and its administration;
-(iii)	locate and inspect the Assets and Materials;
-(iv)	make copies of any accounts, records and documents in relation to the Research and Funding and its administration and remove those copies; and
+(iii)	locate and inspect the Assets and Materials
+(iv)	make copies of any accounts, records and documents in relation to the Research and Funding and its administration and remove those copies and
 (v)	make copies of Materials (where applicable) and remove those copies.
 
 
 Access to Premises and Records
 11.2 The access rights in Clause 11.1 are subject to: -
-(a)	the provision of reasonable prior notice by Grantor; and
+(a)	the provision of reasonable prior notice by Grantor;
 (b)	the applicable Institution’s reasonable security procedures.
 11.3 In the event that Grantor is investigating a matter which, in its opinion, may involve an actual or suspected unethical conduct, or breach of the law or breach of the terms of this Contract, Clause 11.2 (a) will not apply.
 11.4 Upon receipt of reasonable written notice from Grantor, the Institutions and Investigators shall provide any information relating to the Research required by Grantor for monitoring and evaluation purposes.
@@ -334,8 +334,13 @@ Publications of Results and Findings
 
 Ownership and Use of Assets
 18.1 Subject to this Clause 18, title and ownership of the Assets and Materials will vest in the Institutions in such manner as to be determined amongst themselves. Save as provided in Clauses 18.2, 18.3 and 18.4, the Assets and Materials shall be used only for the Research. All Assets and Materials shall be physically located in Singapore and maintained within the control of the applicable Institutions during the Term.
-18.2 The Institutions shall permit Approved Third Parties to access and use the Assets at no charge upon prior appointment provided that: (i) such access and use shall be subject to the availability of the Assets and there are no third party licensing terms restricting such use; and (ii) the Institutions shall be entitled to impose charges for the supply of materials, other services and utilities charges connected with the use of the Assets by the Approved Third Parties.
-18.3 The Institutions may allow its employees to use the Assets for purposes other than the Research provided always that such use shall: (i) be restricted to research and development work within the Institutions; (ii) be allowed only during the times when the Assets are not being used for the Research; and (iii) not impede the Institutions from meeting its obligations and undertakings under this Contract.
+18.2 The Institutions shall permit Approved Third Parties to access and use the Assets at no charge upon prior appointment provided that: 
+(i) such access and use shall be subject to the availability of the Assets and there are no third party licensing terms restricting such use and 
+(ii) the Institutions shall be entitled to impose charges for the supply of materials, other services and utilities charges connected with the use of the Assets by the Approved Third Parties.
+18.3 The Institutions may allow its employees to use the Assets for purposes other than the Research provided always that such use shall: 
+(i) be restricted to research and development work within the Institutions
+(ii) be allowed only during the times when the Assets are not being used for the Research and 
+(iii) not impede the Institutions from meeting its obligations and undertakings under this Contract.
 18.4 Upon the expiry or termination of this Contract or end of the Research and for a period of three (3) years thereon, Grantor may require the Institutions to grant access for the use of any of the Assets and Materials by Grantor or any party identified by Grantor at no charge to the Grantor.
 
 
@@ -353,7 +358,7 @@ Termination
 (j) taking possession by encumbrancer of any of the property or assets of any Institution;
 (k) entry into any voluntary arrangement by any Institution with its creditors;
 (l) liquidation of any Institution;
-(m) ceasing or threatening to cease to carry on business by any Institution; or
+(m) ceasing or threatening to cease to carry on business by any Institution;
 (n) Grantor is of the opinion that the continued performance of the Research is not or no longer viable.
 The Host Institution shall immediately inform the Grantor upon its becoming aware of the occurrence of any of the above events.
 
@@ -368,7 +373,7 @@ Termination
 
 Termination
 20.4 Upon termination of this Contract, the Institutions shall:
-(a)	take all necessary actions to minimise further expenditure on the Research; and
+(a)	take all necessary actions to minimise further expenditure on the Research;
 (b)	[applicable for advance disbursement] return to the Grantor all monies that have not been expended under the Funding.
 
 
@@ -382,7 +387,7 @@ Termination
 
 Disclaimer of Liability
 21.1 The Grantor shall not be liable to the Institutions or any Research Personnel involved in the Research or any other person whatsoever by reason of or arising from the terms and conditions of this Contract or its approval of the Research or the provision of the Funding or the conduct of the Research by, or any breach, act or default of, the Institutions and Research Personnel. Each Institution shall assume all responsibility and liability for: -
-(a)	all claims, losses, demands, actions, suits, proceedings, costs, or expenses whatsoever arising, suffered or incurred directly, from or out of any breach, act or default of such Institutions and/or its Research Personnel; and
+(a)	all claims, losses, demands, actions, suits, proceedings, costs, or expenses whatsoever arising, suffered or incurred directly, from or out of any breach, act or default of such Institutions and/or its Research Personnel;
 (b)	all claims, losses, demands, actions, suits, proceedings, costs, or expenses whatsoever arising out of or in connection with any claim that the intellectual property rights of third party have been infringed as a result of the carrying out of the Research by such Institution and/or its Research Personnel.
 21.2 The Grantor shall have no liability to the Institutions or the Research Personnel merely by reason of its provision of the Funding and  the Institutions shall be responsible for all acts and conduct relating to the Research, including all IP, human and animal ethical issues.
 
