@@ -1,0 +1,15 @@
+
+**Create one time new namespace**
+```
+kubectl create namespace goldenretriever
+```
+
+**Deploy one time Secret**
+```
+kubectl create secret docker-registry azure-cr-secret --docker-server=https://aimspace.azurecr.io --docker-username=aimspace --docker-password=<PASSWORD> --namespace golden-retriever
+```
+
+**Deploy App**
+```
+kubectl apply -f deploy.yaml
+```

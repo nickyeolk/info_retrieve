@@ -1,0 +1,54 @@
+
+
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: goldenretriever
+  namespace: goldenretriever
+spec:
+  replicas: 1
+  selector:
+    app: goldenretriever
+  template:
+    metadata:
+      labels:
+        app: goldenretriever
+    spec:
+      imagePullSecrets:
+          - name: azure-cr-secret
+      containers:
+      - name: goldenretriever-container
+        imagePullPolicy: Always
+        image: aimspace.azurecr.io/bricks/goldenretriever
+        resources:
+          limits:
+            cpu: 2
+            memory: "7Gi"
+          requests:
+            cpu: 1
+            memory: "7Gi"
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goldenretriever
+  namespace: goldenretriever
+spec:
+  loadBalancerIP: 52.139.241.239
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    app: goldenretriever
+  type: LoadBalancer
