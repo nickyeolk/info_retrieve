@@ -316,13 +316,7 @@ Insurance
 Each Institution shall effect and maintain adequate insurance policies to cover any liability arising from its participation in the Research including, but not limited to, those required under any applicable legislation. If requested, an Institution shall provide Grantor with a copy of such insurance policies.
 
 
-Publications of Results and Findings
-15.1 Subject to the provisions of this Clause 15, the Institutions may publish, at any symposia, national, international or regional professional meeting or in any journal, thesis, dissertation, newspaper or otherwise of its own choosing, the findings, methods and results derived from the Research.
-15.2 The Institutions shall ensure that all publications arising from the Research is made publicly available no later than twelve (12) months after the official date of publication. A copy of the publication shall be deposited in the Institution’s open access repository (or any other institutional/subject open access repository), in accordance to the Institution’s open access policy.
-15.3 All publications shall acknowledge the funding support provided by Grantor and, where appropriate, the scientific and other contributions of the other Institutions and Research Personnel in accordance with established norms.
-
-
-16.	Intellectual Property Rights
+16. Intellectual Property Rights
 16.1 Background Intellectual Property (“BIP”) is any existing IP brought by the Institutions and/or Collaborators into the Research. Unless expressly agreed otherwise, this Research shall have no effect on BIP.
 16.2 All Intellectual Property howsoever arising from the Research (“Research IP”) shall, at the first instance, be the property of the Institutions in such proportions as they may determine. This is without prejudice to any agreement that the Institutions may enter into with the Investigators or Research Personnel on ownership and exploitation of Research IP.
 16.3 The Investigators shall use best efforts to identify and disclose to the Institutions details of all such Research IP.

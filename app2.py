@@ -15,9 +15,9 @@ gr = init()
 
 
 st.title('GoldenRetriever')
-st.header('The GoldenRetriever demo allows you to query an FAQ and a T&C knowledge base.')
-st.markdown('[Visit the Repo here!](https://github.com/nickyeolk/info_retrieve)')
-
+st.header('This Information Retrieval demo allows you to query FAQs, T&Cs, or your own knowledge base in natural language.')
+st.markdown('View the source code [here](https://github.com/nickyeolk/info_retrieve)!')
+st.markdown('Visit our [community](https://makerspace.aisingapore.org/community/ai-makerspace/) and ask us a question!')
 kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 'resale_tnc':"How much is the option fee?",
                 'aiap':"Do I need to pay for the program?",
