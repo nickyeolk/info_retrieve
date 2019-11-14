@@ -22,7 +22,7 @@ kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 'resale_tnc':"How much is the option fee?",
                 'aiap':"Do I need to pay for the program?",
                 # 'nrf':"Can I vire from EOM into travel?",
-                'raw_kb':" "}
+                'raw_kb':"What do you not love?"}
 
 def format_func(kb_name):
     namedicts={'pdpa':'PDPA',
@@ -34,7 +34,8 @@ def format_func(kb_name):
 kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'raw_kb'],
                     format_func=format_func)
 if kb=='raw_kb':
-    kb_raw = st.text_area(label='Paste raw text (terms separated by empty line)')
+    kb_raw = st.text_area(label='Paste raw text (terms separated by empty line)', 
+                        value="""I love my chew toy!\n\nI hate Mondays.\n""")
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
 if st.button('Fetch'):
