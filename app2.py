@@ -8,7 +8,7 @@ def init():
     retriever.load_csv_kb(path_to_kb='./data/pdpa.csv', cutoff=196, kb_name='pdpa')
     retriever.load_kb(path_to_kb='./data/aiap.txt', is_faq=True, kb_name='aiap')
     retriever.load_kb(path_to_kb='./data/resale_tnc.txt', kb_name='resale_tnc')
-    retriever.load_kb(path_to_kb='./data/fund_guide_tnc_full.txt', kb_name='nrf')
+    # retriever.load_kb(path_to_kb='./data/fund_guide_tnc_full.txt', kb_name='nrf')
     return retriever
 
 gr = init()
@@ -21,17 +21,17 @@ st.markdown('Visit our [community](https://makerspace.aisingapore.org/community/
 kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 'resale_tnc':"How much is the option fee?",
                 'aiap':"Do I need to pay for the program?",
-                'nrf':"Can I vire from EOM into travel?",
+                # 'nrf':"Can I vire from EOM into travel?",
                 'raw_kb':" "}
 
 def format_func(kb_name):
     namedicts={'pdpa':'PDPA',
                 'resale_tnc':'HDB Resale',
                 'aiap':'AIAP',
-                'nrf':'NRF',
+                # 'nrf':'NRF',
                 'raw_kb':'Paste Raw Text'}
     return namedicts[kb_name]
-kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'nrf', 'raw_kb'],
+kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'raw_kb'],
                     format_func=format_func)
 if kb=='raw_kb':
     kb_raw = st.text_area(label='Paste raw text (terms separated by empty line)')
@@ -71,8 +71,8 @@ st.markdown(
 <p>Do I need to pay back CPF?</p>
 <strong>AIAP</strong>
 <p>What will be covered during the program?</p>
-<strong>NRF</strong>
-<p>Can I hire foreign researchers?</p>
+# <strong>NRF</strong>
+# <p>Can I hire foreign researchers?</p>
 <strong>Raw text </strong><a href="https://www.straitstimes.com/asia/east-asia/china-wants-centralised-digital-currency-after-bitcoin-crackdown" target="_blank">China Digital Currency</a><i> (Select all, copy, and paste into raw text box)</i>
 <p>Which electronic payment gateways support the currency?</p>
 </details>"""
