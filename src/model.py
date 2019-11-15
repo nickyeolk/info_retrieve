@@ -2,9 +2,9 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import tf_sentencepiece
-from .metric_learning import triplet_loss, contrastive_loss
+from metric_learning import triplet_loss, contrastive_loss
 from tensorflow.train import Saver
-from .utils import split_txt, read_txt, clean_txt, read_kb_csv
+from utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
 
 class GoldenRetriever:
@@ -131,8 +131,8 @@ class GoldenRetriever:
 
     def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
                 raw_text=None, is_faq=False, kb_name='default_kb'):
-        """Give either path to .txt document or list of clauses.
-        For text document, each clause is separated by 2 newlines (\n)"""
+        r"""Give either path to .txt document or list of clauses.
+        For text document, each clause is separated by 2 newlines ('\\n\\n')"""
         if text_list:
             self.text[kb_name] = text_list
             if is_faq:
@@ -171,7 +171,7 @@ class GoldenRetriever:
 
 
 '''Unused models below'''
-class USEModel:
+class _USEModel:
     def __init__(self):
         g=tf.Graph()
         with g.as_default():
@@ -192,7 +192,7 @@ class USEModel:
     def close(self):
         self.session.close()
 
-class InferSent:
+class _InferSent:
     def __init__(self):
         from InferSent.models import InferSent
         import torch
