@@ -19,6 +19,7 @@ Build the docs:
 
 ```bash
 cd docs
+sphinx-apidoc -o source/api ../src # generate reStructuredText from Python source directory
 make html
 make latexpdf # to generate pdf documentation. You must have laTeX installed.
 ```
