@@ -6,15 +6,15 @@
 Welcome to HotDocs NLP -- Golden Retriever's documentation!
 ===========================================================
 
+Golden Retriever is an information retrieval engine that
+allows you to search unstructured information with
+natural-language queries. Load a
+text document into the engine, ask it a question,
+and get a ranked list of answers.
+
 ..  toctree::
     :maxdepth: 2
-    :caption: Contents:
 
     api/modules
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+..  mdinclude:: ../../README.md
