@@ -48,7 +48,7 @@ This model is implemented as a flask app.
 Run `python app.py` to launch a web interface
 from which you can query some pre-set documents.
 
-To run the flask up using docker,
+To run the flask app using docker,
 
 1. Clone this repository.
 2. Build the container image: `docker build -t goldenretriever .`  
