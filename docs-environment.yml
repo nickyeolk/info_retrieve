@@ -27,6 +27,7 @@ dependencies:
     - babel==2.7.0
     - chardet==3.0.4
     - click==7.0
+    - commonmark==0.9.1
     - docutils==0.15.2
     - flask==1.1.1
     - gast==0.3.2
@@ -39,8 +40,10 @@ dependencies:
     - joblib==0.14.0
     - keras-applications==1.0.8
     - keras-preprocessing==1.1.0
+    - m2r==0.2.1
     - markdown==3.1.1
     - markupsafe==1.1.1
+    - mistune==0.8.4
     - mock==3.0.5
     - numpy==1.17.2
     - packaging==19.2
@@ -72,4 +75,3 @@ dependencies:
     - urllib3==1.25.7
     - werkzeug==0.16.0
 prefix: /data/anaconda/envs/hotdoc-docs
-
