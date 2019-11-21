@@ -9,23 +9,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class GoldenRetriever:
     """GoldenRetriever model for information retrieval prediction and finetuning.
+    Parameters
+    ----------
+    lr: Learning rate (default 0.6)
+    loss: loss function to use. Options are 'cosine'(default), 'contrastive', or 'triplet' which is a triplet loss based on cosine distance.
+    margin: margin to be used if loss='triplet' (default 0.1)
+
+    Example:
+    >>> gr = GoldenRetriever()
+    >>> text_list = ['I love my chew toy!', 'I hate Mondays.']
+    >>> gr.load_kb(text_list=text_list)
+    >>> gr.make_query('what do you not love?', top_k=1)
+    ['I hate Mondays.']
     """
     
     def __init__(self, lr=0.6, margin=0.3, loss='triplet'):
-        """        
-        Parameters
-        ----------
-        lr: Learning rate (default 0.6)
-        loss: loss function to use. Options are 'cosine'(default), 'contrastive', or 'triplet' which is a triplet loss based on cosine distance.
-        margin: margin to be used if loss='triplet' (default 0.1)
-
-        Example:
-        >>> gr = GoldenRetriever()
-        >>> text_list = ['I love my chew toy!', 'I hate Mondays.']
-        >>> gr.load_kb(text_list=text_list)
-        >>> gr.make_query('what do you not love?', top_k=1)
-        ['I hate Mondays.']
-        """
         # self.v=['module/QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','module/QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['module/QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.lr = lr
