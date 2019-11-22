@@ -2,9 +2,9 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import tf_sentencepiece
-from metric_learning import triplet_loss, contrastive_loss
+from .metric_learning import triplet_loss, contrastive_loss
 from tensorflow.train import Saver
-from utils import split_txt, read_txt, clean_txt, read_kb_csv
+from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
 
 class GoldenRetriever:
@@ -141,7 +141,8 @@ class GoldenRetriever:
             else:
                 self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
         elif raw_text:
-            self.text[kb_name] = split_txt(raw_text)
+            delim = '\n'
+            self.text[kb_name] = split_txt([front+delim for front in raw_text.split('\n')])
         else: raise NameError('invalid kb input!')
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base lock and loaded!')

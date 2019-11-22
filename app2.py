@@ -38,7 +38,7 @@ if kb=='raw_kb':
                         value="""I love my chew toy!\n\nI hate Mondays.\n""")
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
-if st.button('Fetch'):
+if st.button('Fetch') or (data != kb_to_starqn[kb]): #So the answer will not appear right away
     if kb=='raw_kb':
         gr.load_kb(raw_text=kb_raw, kb_name='raw_kb')
     prediction, scores = gr.make_query(data, top_k=int(top_k), kb_name=kb)
@@ -49,7 +49,7 @@ if st.button('Fetch'):
         anshead_string = """<h3><text>Answer {}</text></h3>""".format(ansnum+1)
         st.markdown(anshead_string, unsafe_allow_html=True)
         reply_string="""<table>"""
-        lines = result.split('\n')
+        lines = [line for line in result.split('\n') if line]
         for line in lines:
             reply_string += """<tr>"""
             tabledatas = line.split(';;')
@@ -72,8 +72,6 @@ st.markdown(
 <p>Do I need to pay back CPF?</p>
 <strong>AIAP</strong>
 <p>What will be covered during the program?</p>
-# <strong>NRF</strong>
-# <p>Can I hire foreign researchers?</p>
 <strong>Raw text </strong><a href="https://www.straitstimes.com/asia/east-asia/china-wants-centralised-digital-currency-after-bitcoin-crackdown" target="_blank">China Digital Currency</a><i> (Select all, copy, and paste into raw text box)</i>
 <p>Which electronic payment gateways support the currency?</p>
 </details>"""
