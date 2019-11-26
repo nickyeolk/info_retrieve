@@ -108,3 +108,5 @@ inferSent/
 GloVe/
 fastText/
 
+#database file
+*.db
