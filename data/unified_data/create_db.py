@@ -25,7 +25,7 @@ def create_connection(db_file):
     return conn
  
 def main():
-    db_path =  r"./pythonsqlite.db"
+    db_path =  r"./data/unified_data/pythonsqlite.db"
     conn = create_connection(db_path)
 
     sql_create_kb_clauses = """CREATE TABLE IF NOT EXISTS kb_clauses (
@@ -38,7 +38,7 @@ def main():
 
     sql_create_labeled_queries = """CREATE TABLE IF NOT EXISTS labeled_queries (
         id integer PRIMARY KEY,
-        query_strinig varchar,
+        query_string varchar,
         clause_id integer,
         span_start int,
         span_end integer
