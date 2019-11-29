@@ -9,6 +9,8 @@ from src.utils import question_cleaner
 import random
 from datetime import datetime
 import secrets
+from src.utils import read_txt, split_txt, clean_txt
+import ast
 
 
 
@@ -104,8 +106,29 @@ def create_kb_pdpa(conn, dir_uid):
         kb_clause_uid = cur.lastrowid
         cur.execute(labeled_queries_statement, [row['queries'], kb_clause_uid, datetime.now()])
     
+def create_kb_nrf(conn, dir_uid):
+    cur = conn.cursor()
+    df = pd.read_csv('../round_1_labels/labeled_dataset_v2.csv', encoding='iso-8859-1')
+    df.dropna(axis=0, subset=['answer'], inplace=True)
+    df['answer']=df.apply(lambda x: ast.literal_eval(x['answer']), axis=1)
+    kb_location='./data/fund_guide_tnc_full.txt'
+    text = split_txt(read_txt(kb_location))
 
+    kb_raw_statement="""INSERT INTO kb_raw (filepath, kb_name, type, directory_id) VALUES (?, ?, ?, ?)"""
+    cur.execute(kb_raw_statement, ['./data/fund_guide_tnc_full.txt', 'nrf', 'tnc', dir_uid])    
+    kb_raw_uid = cur.lastrowid
 
+    kb_clause_statement="""INSERT INTO kb_clauses (raw_id, clause_ind, raw_string, processed_string, created_at) VALUES (?, ?, ?, ?, ?)"""
+    labeled_queries_statement="""INSERT INTO labeled_queries (query_string, clause_id, created_at) VALUES (?, ?, ?)"""
+    doc_ind_to_table_ind = {}
+    for ii, row in enumerate(text):
+        cur.execute(kb_clause_statement, [kb_raw_uid, ii, row, clean_txt([row])[0], datetime.now()])
+        kb_clause_uid = cur.lastrowid
+        doc_ind_to_table_ind[ii]=kb_clause_uid
+    print(doc_ind_to_table_ind)
+    for ii, row in df.iterrows():
+        for ansind in row['answer']:
+            cur.execute(labeled_queries_statement, [row['queries'], doc_ind_to_table_ind[ansind], datetime.now()])
 
 def create_user_id(conn):
     user_insert_statement="""INSERT INTO users (created_at, email, full_name, org_name, hashkey) VALUES (?, ?, ?, ?, ?)"""
@@ -125,6 +148,8 @@ def load_my_kbs(conn):
     create_kb_insure(conn, dir_uid)
     dir_uid = create_kb_directory(conn, user_uid, 'PDPA')
     create_kb_pdpa(conn, dir_uid)
+    dir_uid = create_kb_directory(conn, user_uid, 'NRF')
+    create_kb_nrf(conn, dir_uid)
 
 
 def main():
