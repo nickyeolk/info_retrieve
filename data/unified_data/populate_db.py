@@ -52,14 +52,19 @@ def create_kb_insure(conn, dir_uid):
     df_all, df_doc, category_list = load_insurance_qna_data()
 
     for category in category_list:
-        df_cat = df_all[df_all[0]==category]
+        df_cat = df_all[df_all[0]==category] # isolate questions in that category
+        query_db_statement = """INSERT INTO query_db (query_string) VALUES (?)"""
+        query_ind_to_uid = {}
         qa_pairs=[]
         for ii, row in df_cat.iterrows():
+            # write to query_db
+            cur.execute(query_db_statement, [row['text']]) 
+            query_ind_to_uid[ii] = cur.lastrowid
             question_text = row['text']
             for answer in row['pos_samples']:
                 answer_text = df_doc.loc[answer, 'text']
-                qa_pairs.append([question_text, answer_text])
-        df_see = pd.DataFrame(qa_pairs, columns=['qn', 'ans'])
+                qa_pairs.append([ii, question_text, answer_text])
+        df_see = pd.DataFrame(qa_pairs, columns=['qn_ind', 'qn', 'ans'])
         print(len(df_see))
         x = df_see.groupby('ans')['ans'].count()
         print('repeats', len(x[x>1]))
@@ -68,18 +73,22 @@ def create_kb_insure(conn, dir_uid):
             return df_kb[df_kb['answer']==row['ans']].index.values[0]
         df_see['ans_ind'] = df_see.apply(lambda x: func(x), axis=1) # this is qn vs answer index
 
+        # write to kb_raw
         kb_raw_statement="""INSERT INTO kb_raw (filepath, kb_name, type, directory_id) VALUES (?, ?, ?, ?)"""
         cur.execute(kb_raw_statement, ['None', category, 'qna', dir_uid])
         kb_raw_uid = cur.lastrowid
-        kb_clause_statement="""INSERT INTO kb_clauses (raw_id, clause_ind, raw_string, processed_string, created_at) VALUES (?, ?, ?, ?, ?)"""
+
+        # write to kb_clauses
+        clause_ind_to_uid = {}
+        kb_clause_statement = """INSERT INTO kb_clauses (raw_id, clause_ind, raw_string, processed_string, created_at) VALUES (?, ?, ?, ?, ?)"""
         for ii, row in df_kb.iterrows():
             cur.execute(kb_clause_statement, [kb_raw_uid, ii, row.values[0], row.values[0], datetime.now()])
-            kb_clause_uid = cur.lastrowid
+            clause_ind_to_uid[ii] = cur.lastrowid
 
-            df_relevant_ans = df_see[df_see['ans_ind']==ii]
-            labeled_queries_statement="""INSERT INTO labeled_queries (query_string, clause_id, created_at) VALUES (?, ?, ?)"""
-            for _, roww in df_relevant_ans.iterrows():
-                cur.execute(labeled_queries_statement, [roww['qn'], kb_clause_uid, datetime.now()])
+        # write to query_labels
+        query_label_statement = """INSERT INTO query_labels (query_id, clause_id, created_at) VALUES (?, ?, ?)"""
+        for ii, row in df_see.iterrows():
+            cur.execute(query_label_statement, [query_ind_to_uid[row['qn_ind']], clause_ind_to_uid[row['ans_ind']], datetime.now()])
 
 def create_kb_pdpa(conn, dir_uid):
     cur = conn.cursor()
@@ -146,14 +155,14 @@ def load_my_kbs(conn):
     user_uid = create_user_id(conn)
     dir_uid = create_kb_directory(conn, user_uid, 'insuranceQA')
     create_kb_insure(conn, dir_uid)
-    dir_uid = create_kb_directory(conn, user_uid, 'PDPA')
-    create_kb_pdpa(conn, dir_uid)
-    dir_uid = create_kb_directory(conn, user_uid, 'NRF')
-    create_kb_nrf(conn, dir_uid)
+    # dir_uid = create_kb_directory(conn, user_uid, 'PDPA')
+    # create_kb_pdpa(conn, dir_uid)
+    # dir_uid = create_kb_directory(conn, user_uid, 'NRF')
+    # create_kb_nrf(conn, dir_uid)
 
 
 def main():
-    conn = create_connection('./data/unified_data/pythonsqlite.db')
+    conn = create_connection('./data/unified_data/pythonsqlite2.db')
     load_my_kbs(conn)
     conn.commit()
 

@@ -25,7 +25,7 @@ def create_connection(db_file):
     return conn
  
 def main():
-    db_path =  r"./data/unified_data/pythonsqlite.db"
+    db_path =  r"./data/unified_data/pythonsqlite2.db"
     conn = create_connection(db_path)
 
     sql_create_kb_clauses = """CREATE TABLE IF NOT EXISTS kb_clauses (
@@ -38,9 +38,14 @@ def main():
         created_at timestamp
     );"""
 
-    sql_create_labeled_queries = """CREATE TABLE IF NOT EXISTS labeled_queries (
+    sql_create_query_db = """CREATE TABLE IF NOT EXISTS query_db (
         id integer PRIMARY KEY,
-        query_string varchar NOT NULL,
+        query_string varchar NOT NULL
+    );"""
+
+    sql_create_query_labels = """CREATE TABLE IF NOT EXISTS query_labels (
+        id integer PRIMARY KEY,
+        query_id integer,
         clause_id integer,
         span_start integer,
         span_end integer,
@@ -66,7 +71,12 @@ def main():
         id integer PRIMARY KEY,
         created_at timestamp,
         query_string varchar,
-        kb_dir_id int
+        kb_dir_id int,
+        kb_raw_name varchar,
+        return_index int,
+        return_span_start int,
+        return_span_end int,
+        feedback int
     );"""
 
     sql_create_users = """CREATE TABLE IF NOT EXISTS users (
@@ -81,7 +91,8 @@ def main():
     if conn:
         # create tables
         create_table(conn, sql_create_kb_clauses)
-        create_table(conn, sql_create_labeled_queries)
+        create_table(conn, sql_create_query_labels)
+        create_table(conn, sql_create_query_db)
         create_table(conn, sql_create_kb_raw)
         create_table(conn, sql_create_kb_directory)
         create_table(conn, sql_create_query_log)
