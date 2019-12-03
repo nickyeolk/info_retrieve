@@ -104,16 +104,24 @@ def create_kb_pdpa(conn, dir_uid):
         return df_pdpa
     df_pdpa = read_and_condition_csv('./data/pdpa.csv', cutoff=196)
 
+    # write to kb_raw
     kb_raw_statement="""INSERT INTO kb_raw (filepath, kb_name, type, directory_id) VALUES (?, ?, ?, ?)"""
     cur.execute(kb_raw_statement, ['./data/pdpa.csv', 'PDPA', 'qna', dir_uid])    
     kb_raw_uid = cur.lastrowid
 
     kb_clause_statement="""INSERT INTO kb_clauses (raw_id, clause_ind, context_string, raw_string, processed_string, created_at) VALUES (?, ?, ?, ?, ?, ?)"""
-    labeled_queries_statement="""INSERT INTO labeled_queries (query_string, clause_id, created_at) VALUES (?, ?, ?)"""
+    query_db_statement="""INSERT INTO query_db (query_string) VALUES (?)"""
+    query_label_statement = """INSERT INTO query_labels (query_id, clause_id, created_at) VALUES (?, ?, ?)"""
     for ii, row in df_pdpa.iterrows():
+        # write to kb_clauses
         cur.execute(kb_clause_statement, [kb_raw_uid, ii, row['meta'], row['answer_str'], row['kb'], datetime.now()])
         kb_clause_uid = cur.lastrowid
-        cur.execute(labeled_queries_statement, [row['queries'], kb_clause_uid, datetime.now()])
+        # write to query_db
+        cur.execute(query_db_statement, [row['queries']])
+        query_uid = cur.lastrowid
+        # write to query_labels
+        cur.execute(query_label_statement, [query_uid, kb_clause_uid, datetime.now()])
+
     
 def create_kb_nrf(conn, dir_uid):
     cur = conn.cursor()
@@ -123,21 +131,28 @@ def create_kb_nrf(conn, dir_uid):
     kb_location='./data/fund_guide_tnc_full.txt'
     text = split_txt(read_txt(kb_location))
 
+    # write to kb_raw
     kb_raw_statement="""INSERT INTO kb_raw (filepath, kb_name, type, directory_id) VALUES (?, ?, ?, ?)"""
     cur.execute(kb_raw_statement, ['./data/fund_guide_tnc_full.txt', 'nrf', 'tnc', dir_uid])    
     kb_raw_uid = cur.lastrowid
 
     kb_clause_statement="""INSERT INTO kb_clauses (raw_id, clause_ind, raw_string, processed_string, created_at) VALUES (?, ?, ?, ?, ?)"""
-    labeled_queries_statement="""INSERT INTO labeled_queries (query_string, clause_id, created_at) VALUES (?, ?, ?)"""
+    query_db_statement="""INSERT INTO query_db (query_string) VALUES (?)"""
+    query_label_statement = """INSERT INTO query_labels (query_id, clause_id, created_at) VALUES (?, ?, ?)"""
     doc_ind_to_table_ind = {}
     for ii, row in enumerate(text):
+        # write to kb_clauses
         cur.execute(kb_clause_statement, [kb_raw_uid, ii, row, clean_txt([row])[0], datetime.now()])
         kb_clause_uid = cur.lastrowid
         doc_ind_to_table_ind[ii]=kb_clause_uid
     print(doc_ind_to_table_ind)
     for ii, row in df.iterrows():
+        # write to query_db
+        cur.execute(query_db_statement, [row['queries']])
+        query_db_uid = cur.lastrowid
         for ansind in row['answer']:
-            cur.execute(labeled_queries_statement, [row['queries'], doc_ind_to_table_ind[ansind], datetime.now()])
+            # write to query_labels
+            cur.execute(query_label_statement, [query_db_uid, doc_ind_to_table_ind[ansind], datetime.now()])
 
 def create_user_id(conn):
     user_insert_statement="""INSERT INTO users (created_at, email, full_name, org_name, hashkey) VALUES (?, ?, ?, ?, ?)"""
@@ -155,10 +170,10 @@ def load_my_kbs(conn):
     user_uid = create_user_id(conn)
     dir_uid = create_kb_directory(conn, user_uid, 'insuranceQA')
     create_kb_insure(conn, dir_uid)
-    # dir_uid = create_kb_directory(conn, user_uid, 'PDPA')
-    # create_kb_pdpa(conn, dir_uid)
-    # dir_uid = create_kb_directory(conn, user_uid, 'NRF')
-    # create_kb_nrf(conn, dir_uid)
+    dir_uid = create_kb_directory(conn, user_uid, 'PDPA')
+    create_kb_pdpa(conn, dir_uid)
+    dir_uid = create_kb_directory(conn, user_uid, 'NRF')
+    create_kb_nrf(conn, dir_uid)
 
 
 def main():
