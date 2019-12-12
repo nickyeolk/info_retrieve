@@ -116,7 +116,6 @@ class GoldenRetriever:
                 """
                 neg_response_embeddings = self.neg_response_encoder(input=tf.constant(neg_answer), 
                                                                     context=tf.constant(neg_answer_context))['outputs']
-                self.cost = tfa.losses.TripletSemiHardLoss(margin = self.margin)
                 cost_value = triplet_loss(question_embeddings, response_embeddings, neg_response_embeddings)
 
                 
