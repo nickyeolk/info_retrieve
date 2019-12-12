@@ -15,9 +15,9 @@ class GoldenRetriever:
     """GoldenRetriever model for information retrieval prediction and finetuning.
     Parameters
     ----------
-    lr: Learning rate (default 0.6)
-    loss: loss function to use. Options are 'cosine'(default), 'contrastive', or 'triplet' which is a triplet loss based on cosine distance.
-    margin: margin to be used if loss='triplet' (default 0.1)
+    margin: margin to be used if loss='triplet' (default 0.3)
+    loss: loss function to use. Options are 'cosine', 'contrastive', or 'triplet'(default) which is a triplet loss based on cosine distance.
+    **kwargs: keyword arguments for Adam() optimizer
 
     Example:
     >>> gr = GoldenRetriever()
@@ -28,10 +28,9 @@ class GoldenRetriever:
     """
     
     
-    def __init__(self, lr=0.6, margin=0.3, loss='cosine'):
+    def __init__(self, margin=0.3, loss='triplet', **kwargs):
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel']
-        self.lr = lr
         self.margin = margin
         self.loss = loss
         self.vectorized_knowledge = {}
@@ -46,9 +45,9 @@ class GoldenRetriever:
         print('model initiated!')
         
         # optimizer & losses
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(**kwargs)
         self.cost_history = []
-        
+        self.var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
 
         
         
@@ -125,8 +124,8 @@ class GoldenRetriever:
         self.cost_history.append(cost_value.numpy().mean())
         
         # apply gradient
-        grads = tape.gradient(cost_value, var_finetune)
-        optimizer.apply_gradients(zip(grads, var_finetune))
+        grads = tape.gradient(cost_value, self.var_finetune)
+        self.optimizer.apply_gradients(zip(grads, self.var_finetune))
 
         return cost_value.numpy().mean()
         
