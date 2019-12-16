@@ -30,7 +30,7 @@ class GoldenRetriever:
     
     def __init__(self, margin=0.3, loss='triplet', **kwargs):
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
-        self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel'
+        self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.margin = margin
         self.loss = loss
         self.vectorized_knowledge = {}
@@ -155,7 +155,7 @@ class GoldenRetriever:
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base (csv) lock and loaded!')
         
-    def export(self, savepath='fine_tuned_{}'.format(datetime.datetime.now())):
+    def export(self, savepath='fine_tuned'):
         '''Path should include partial filename.'''
         tf.saved_model.save(self.embed, savepath)
 
