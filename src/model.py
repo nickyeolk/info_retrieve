@@ -30,7 +30,7 @@ class GoldenRetriever:
     
     def __init__(self, margin=0.3, loss='triplet', **kwargs):
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
-        self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel']
+        self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel'
         self.margin = margin
         self.loss = loss
         self.vectorized_knowledge = {}
@@ -157,7 +157,7 @@ class GoldenRetriever:
         
     def export(self, savepath='fine_tuned_{}'.format(datetime.datetime.now())):
         '''Path should include partial filename.'''
-        tf.saved_model.save(self.embed, 'fine_tuned')
+        tf.saved_model.save(self.embed, savepath)
 
     def restore(self, savepath):
         self.embed = tf.saved_model.load(savepath)
