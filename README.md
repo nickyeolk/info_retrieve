@@ -1,4 +1,4 @@
-# GoldenRetriever - Information retrieval using fine-tuned semantic similarity
+# GoldenRetriever - Information retrieval using fine-tuned semantic similarity (v0.1 - tf-1.13)
 
 ## GoldenRetriever is part of the HotDoc NLP project, which provides a series of open-source AI tools for natural language processing. HotDoc NLP is part of the [AI Makerspace](https://makerspace.aisingapore.org/) program. Please visit the [demo page](https://goldenretriever.azurewebsites.net/) where you will be able to query a sample knowledge base. 
 
