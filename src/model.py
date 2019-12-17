@@ -75,15 +75,8 @@ class GoldenRetriever:
         
         
     def finetune(self, question, answer, context, margin=0.3, loss='triplet', neg_answer=[], neg_answer_context=[], label=[]):
-        """
-        Note: 
-            - Contrastive loss is implemented from TF-addon
-            - Triplet loss uses a non-official implementation outside of TF
-            - Both Contrastive loss and Triplet loss uses cosine distance as a base
-        https://www.tensorflow.org/guide/eager
-        """
+
         with tf.GradientTape() as tape:
-            
             # get encodings
             question_embeddings = self.question_encoder(tf.constant(question))['outputs']
             response_embeddings = self.response_encoder(input=tf.constant(answer), 
@@ -111,7 +104,7 @@ class GoldenRetriever:
                 
             elif loss == 'triplet':
                 """
-                https://www.tensorflow.org/addons/tutorials/losses_triplet
+                Triplet loss uses a non-official self-implementated loss function outside of TF based on cosine distance
                 """
                 neg_response_embeddings = self.neg_response_encoder(input=tf.constant(neg_answer), 
                                                                     context=tf.constant(neg_answer_context))['outputs']
