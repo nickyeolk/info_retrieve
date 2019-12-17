@@ -15,8 +15,6 @@ class GoldenRetriever:
     """GoldenRetriever model for information retrieval prediction and finetuning.
     Parameters
     ----------
-    margin: margin to be used if loss='triplet' (default 0.3)
-    loss: loss function to use. Options are 'cosine', 'contrastive', or 'triplet'(default) which is a triplet loss based on cosine distance.
     **kwargs: keyword arguments for Adam() optimizer
 
     Example:
@@ -28,11 +26,9 @@ class GoldenRetriever:
     """
     
     
-    def __init__(self, margin=0.3, loss='triplet', **kwargs):
+    def __init__(self, **kwargs):
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
-        self.margin = margin
-        self.loss = loss
         self.vectorized_knowledge = {}
         self.text = {}
         self.questions = {}
@@ -44,7 +40,7 @@ class GoldenRetriever:
         self.neg_response_encoder = self.embed.signatures['response_encoder']
         print('model initiated!')
         
-        # optimizer & losses
+        # optimizer
         self.optimizer = tf.keras.optimizers.Adam(**kwargs)
         self.cost_history = []
         self.var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
@@ -78,26 +74,29 @@ class GoldenRetriever:
         return sorted_ans[:top_k], similarity_score[sortargs[:top_k]] 
         
         
-    def finetune(self, question, answer, context, neg_answer=[], neg_answer_context=[], label=[]):
+    def finetune(self, question, answer, context, margin=0.3, loss='triplet', neg_answer=[], neg_answer_context=[], label=[]):
         """
-        Apply gradients on
+        Note: 
+            - Contrastive loss is implemented from TF-addon
+            - Triplet loss uses a non-official implementation outside of TF
+            - Both Contrastive loss and Triplet loss uses cosine distance as a base
+        https://www.tensorflow.org/guide/eager
         """
         with tf.GradientTape() as tape:
-            # https://www.tensorflow.org/guide/eager
-
+            
             # get encodings
             question_embeddings = self.question_encoder(tf.constant(question))['outputs']
             response_embeddings = self.response_encoder(input=tf.constant(answer), 
                                                         context=tf.constant(context))['outputs']
 
-            if self.loss == 'cosine':
+            if loss == 'cosine':
                 """
                 # https://www.tensorflow.org/api_docs/python/tf/keras/losses/CosineSimilarity
                 """
                 self.cost = tf.keras.losses.CosineSimilarity(axis=1)
                 cost_value = self.cost(question_embeddings, response_embeddings)
                 
-            elif self.loss == 'contrastive':
+            elif loss == 'contrastive':
                 """
                 https://www.tensorflow.org/addons/api_docs/python/tfa/losses/ContrastiveLoss
                 
@@ -107,10 +106,10 @@ class GoldenRetriever:
                 self.cosine_dist = tf.keras.losses.CosineSimilarity(axis=1)
                 cosine_dist_value = self.cosine_dist(question_embeddings, response_embeddings)
                 
-                self.cost = tfa.losses.contrastive.ContrastiveLoss(margin = self.margin)
+                self.cost = tfa.losses.contrastive.ContrastiveLoss(margin = margin)
                 cost_value = self.cost(label, cosine_dist_value)
                 
-            elif self.loss == 'triplet':
+            elif loss == 'triplet':
                 """
                 https://www.tensorflow.org/addons/tutorials/losses_triplet
                 """
@@ -156,11 +155,23 @@ class GoldenRetriever:
         print('knowledge base (csv) lock and loaded!')
         
     def export(self, savepath='fine_tuned'):
-        '''Path should include partial filename.'''
-        tf.saved_model.save(self.embed, savepath)
+        '''
+        Path should include partial filename.
+        https://www.tensorflow.org/api_docs/python/tf/saved_model/save
+        '''
+        tf.saved_model.save(self.embed, savepath, signatures={
+                                                                'default': self.embed.signatures['default'],
+                                                                'response_encoder':self.embed.signatures['response_encoder'],
+                                                                'question_encoder':self.embed.signatures['question_encoder']  
+                                                                })
 
     def restore(self, savepath):
         self.embed = tf.saved_model.load(savepath)
+
+        # re-initialize the references to the model signatures
+        self.question_encoder = self.embed.signatures['question_encoder']
+        self.response_encoder = self.embed.signatures['response_encoder']
+        self.neg_response_encoder = self.embed.signatures['response_encoder']
 
 
 
