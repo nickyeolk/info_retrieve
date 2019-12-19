@@ -32,19 +32,24 @@ class GoldenRetriever:
         self.vectorized_knowledge = {}
         self.text = {}
         self.questions = {}
+        self.opt_params = kwargs
 
         # init saved model
         self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/2')
+        self.init_signatures()
+
+
+    def init_signatures(self):
+        # re-initialize the references to the model signatures
         self.question_encoder = self.embed.signatures['question_encoder']
         self.response_encoder = self.embed.signatures['response_encoder']
         self.neg_response_encoder = self.embed.signatures['response_encoder']
         print('model initiated!')
-        
+
         # optimizer
-        self.optimizer = tf.keras.optimizers.Adam(**kwargs)
+        self.optimizer = tf.keras.optimizers.Adam(**self.opt_params)
         self.cost_history = []
         self.var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
-
         
         
     def predict(self, text, context=None, type='response'):
@@ -159,12 +164,15 @@ class GoldenRetriever:
                                                                 })
 
     def restore(self, savepath):
+        """
+        Signatures need to be re-init after weights are loaded.
+        """
         self.embed = tf.saved_model.load(savepath)
+        self.init_signatures()
 
-        # re-initialize the references to the model signatures
-        self.question_encoder = self.embed.signatures['question_encoder']
-        self.response_encoder = self.embed.signatures['response_encoder']
-        self.neg_response_encoder = self.embed.signatures['response_encoder']
+
+
+
 
 
 
