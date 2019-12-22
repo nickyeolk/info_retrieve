@@ -4,7 +4,7 @@ from src.model import GoldenRetriever
 @st.cache(allow_output_mutation=True)
 def init():
     retriever = GoldenRetriever()
-    retriever.restore('./google_use_nrf_pdpa_tuned/variables-0')
+    #retriever.restore('./google_use_nrf_pdpa_tuned/variables-0')
     retriever.load_csv_kb(path_to_kb='./data/pdpa.csv', cutoff=196, kb_name='pdpa')
     retriever.load_kb(path_to_kb='./data/aiap.txt', is_faq=True, kb_name='aiap')
     retriever.load_kb(path_to_kb='./data/resale_tnc.txt', kb_name='resale_tnc')
