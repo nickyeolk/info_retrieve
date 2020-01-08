@@ -12,9 +12,10 @@ from .metric_learning import triplet_loss
 
 
 class GoldenRetriever:
-    """GoldenRetriever model for information retrieval prediction and finetuning.
+    """
+    GoldenRetriever model for information retrieval prediction and finetuning.
     Parameters
-    ----------
+    
     **kwargs: keyword arguments for Adam() optimizer
 
     Example:
@@ -23,10 +24,15 @@ class GoldenRetriever:
     >>> gr.load_kb(text_list=text_list)
     >>> gr.make_query('what do you not love?', top_k=1)
     ['I hate Mondays.']
+    
     """
-    
-    
+     
     def __init__(self, **kwargs):
+        """
+        initialize the model. load google USE embedding
+   
+        """
+
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.vectorized_knowledge = {}
@@ -37,7 +43,6 @@ class GoldenRetriever:
         # init saved model
         self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/2')
         self.init_signatures()
-
 
     def init_signatures(self):
         # re-initialize the references to the model signatures
@@ -50,11 +55,18 @@ class GoldenRetriever:
         self.optimizer = tf.keras.optimizers.Adam(**self.opt_params)
         self.cost_history = []
         self.var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
-        
-        
+               
     def predict(self, text, context=None, type='response'):
-        """Return the tensor representing embedding of input text.
-        Type can be 'query' or 'response' """
+        """
+        Return the tensor representing embedding of input text.
+        
+        Parameters:
+        type(string) : can be 'query' or 'response'
+
+        Returns:
+        representing embedding of input text
+
+        """
         if type=='query':
             return self.question_encoder(tf.constant([text]))['outputs']
             # return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
@@ -66,9 +78,17 @@ class GoldenRetriever:
         else: print('Type of prediction not defined')
         
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
-        """Make a query against the stored vectorized knowledge. 
-        Choose index=True to return sorted index of matches.
-        type can be 'query' or 'response' if you are comparing statements
+        """
+        Make a query against the stored vectorized knowledge. 
+        
+        Parameters:
+        type(string): can be 'query' or 'response'. Use to compare statements
+        kb_name(string): the name of knowledge base in the knowledge dictionary
+        index(boolean): Choose index=True to return sorted index of matches. 
+
+        Returns:
+        return the top K vectorized answers and their scores
+
         """
         similarity_score=cosine_similarity(self.vectorized_knowledge[kb_name], self.predict([querystring], type=predict_type))
         sortargs=np.flip(similarity_score.argsort(axis=0))
@@ -80,7 +100,13 @@ class GoldenRetriever:
         
         
     def finetune(self, question, answer, context, margin=0.3, loss='triplet', neg_answer=[], neg_answer_context=[], label=[]):
+        """
+        Finetune the model
 
+        Parameters:
+        loss(string): loss function can be 'triplet', 'cosine' and 'contrastive'
+
+        """
         with tf.GradientTape() as tape:
             # get encodings
             question_embeddings = self.question_encoder(tf.constant(question))['outputs']
@@ -90,6 +116,7 @@ class GoldenRetriever:
             if loss == 'cosine':
                 """
                 # https://www.tensorflow.org/api_docs/python/tf/keras/losses/CosineSimilarity
+
                 """
                 self.cost = tf.keras.losses.CosineSimilarity(axis=1)
                 cost_value = self.cost(question_embeddings, response_embeddings)
@@ -100,6 +127,7 @@ class GoldenRetriever:
                 
                 y_true to be a vector of binary labels
                 y_hat to be the respective distances
+
                 """
                 self.cosine_dist = tf.keras.losses.CosineSimilarity(axis=1)
                 cosine_dist_value = self.cosine_dist(question_embeddings, response_embeddings)
@@ -110,6 +138,7 @@ class GoldenRetriever:
             elif loss == 'triplet':
                 """
                 Triplet loss uses a non-official self-implementated loss function outside of TF based on cosine distance
+
                 """
                 neg_response_embeddings = self.neg_response_encoder(input=tf.constant(neg_answer), 
                                                                     context=tf.constant(neg_answer_context))['outputs']
@@ -127,8 +156,17 @@ class GoldenRetriever:
         
     def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
                 raw_text=None, is_faq=False, kb_name='default_kb'):
-        r"""Give either path to .txt document or list of clauses.
-        For text document, each clause is separated by 2 newlines ('\\n\\n')"""
+        """
+        Give either path to .txt document or list of clauses.
+        For text document, each clause is separated by 2 newlines ('\\n\\n')
+        
+        Parameters:
+        is_faq(boolean): can be in the format of FAQ. 
+
+        Returns:
+        create the knowledge base
+
+        """
         if text_list:
             self.text[kb_name] = text_list
             if is_faq:
@@ -147,6 +185,11 @@ class GoldenRetriever:
         
     def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
                     query_col='question', answer_str_col='answer', cutoff=None):
+
+        """
+        load the document in csv format
+
+        """
         self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
                             query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
@@ -156,6 +199,7 @@ class GoldenRetriever:
         '''
         Path should include partial filename.
         https://www.tensorflow.org/api_docs/python/tf/saved_model/save
+
         '''
         tf.saved_model.save(self.embed, savepath, signatures={
                                                                 'default': self.embed.signatures['default'],
@@ -166,6 +210,7 @@ class GoldenRetriever:
     def restore(self, savepath):
         """
         Signatures need to be re-init after weights are loaded.
+
         """
         self.embed = tf.saved_model.load(savepath)
         self.init_signatures()
