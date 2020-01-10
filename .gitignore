@@ -110,3 +110,4 @@ fastText/
 
 #database file
 *.db
+db_cnxn_str.txt
