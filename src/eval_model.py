@@ -95,7 +95,7 @@ if __name__ == '__main__':
     eval_dict = {}
     # for kb_name in ['PDPA', 'nrf', 'critical-illness-insurance', 'other-insurance', 'Steam_engine', '1973_oil_crisis']:
     for kb_name in df.kb_name.unique():
-        print(f"\n Evaluating on {kb_name} \n")
+        print(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
 
         # dict stores eval metrics and relevance ranks
         eval_kb_dict = {}
@@ -174,10 +174,17 @@ if __name__ == '__main__':
     print(f"Time Taken : {end_time - start_time}")
 
 """
-# expected output for 2 knowledge bases, PDPA and nrf
+Expected output for selected KBs
 
-               mrr_score  r1_score  r2_score  r3_score
-PDPA           0.579315  0.474576  0.542373  0.652542
-nrf            0.097777         0  0.045977  0.091954
-Across_all_kb  0.374955  0.273171  0.331707  0.414634
+                           mrr_score  r1_score  r2_score  r3_score
+PDPA                        0.640719  0.525424  0.627119  0.720339
+nrf                         0.460211  0.275862  0.482759  0.528736
+critical-illness-insurance  0.329302  0.178571  0.342857       0.4
+other-insurance             0.474588  0.259259  0.444444  0.611111
+Steam_engine                0.689601  0.550388  0.744186  0.775194
+1973_oil_crisis             0.781951   0.65625   0.84375  0.890625
+Across_all_kb               0.551312  0.402027  0.570946  0.636824
+Start      : 2020-01-20 16:45:28.697139
+End        : 2020-01-20 16:47:05.523962
+Time Taken : 0:01:36.826823
 """
