@@ -93,38 +93,50 @@ if __name__ == '__main__':
     df, train_dict, test_dict, train_idx_all, test_idx_all = kb_train_test_split(0.6, 100)
 
     eval_dict = {}
-    for kb_name in ['PDPA', 'nrf']:
-    # for kb_name in ['life-insurance']:
-    # for kb_name in df.kb_name.unique():
+    # for kb_name in ['PDPA', 'nrf', 'critical-illness-insurance', 'other-insurance', 'Steam_engine', '1973_oil_crisis']:
+    for kb_name in df.kb_name.unique():
         print(f"\n Evaluating on {kb_name} \n")
 
         # dict stores eval metrics and relevance ranks
         eval_kb_dict = {}
 
-        # get indices and mask for eval
+        # test-mask is a int array
+        # that chooses specific test questions
+        # e.g.  test_mask [True, True, False]
+        #       query_idx = [0,1]
         kb_df = df.loc[df.kb_name == kb_name]
         kb_idx = df.loc[df.kb_name == kb_name].index
         test_mask = np.isin(kb_idx, test_dict[kb_name])
-        query_idx = np.arange(0,len(test_mask))[test_mask]
+        # test_idx_mask = np.arange(len(kb_df))[test_mask]
+
+        # get string queries and responses, unduplicated as a list
+        kb_df = kb_df.reset_index(drop=True)
+        query_list = kb_df.query_string.tolist()
+        response_list_w_duplicates = kb_df.processed_string.tolist()
+        response_list = kb_df.processed_string.drop_duplicates().tolist() 
+
+        # this index list is important
+        # it lists the index of the correct answer for every question
+        # e.g. for 20 questions mapped to 5 repeated answers
+        # it has 20 elements, each between 0 and 4
+        response_idx_list = [response_list.index(nonunique_response_string) 
+                            for nonunique_response_string in response_list_w_duplicates]
+        response_idx_list = np.array(response_idx_list)[[test_mask]]
 
         # get encoded queries and responses
-        encoded_queries = model_to_eval.predict(kb_df.query_string, type='query')
-        encoded_responses = model_to_eval.predict(kb_df.processed_string, type='response')
-        print(f"\nencoded_queries.shape: {encoded_queries.shape}")
-        print(f"encoded_responses.shape: {encoded_responses.shape}\n")
+        encoded_queries = model_to_eval.predict(query_list, type='query')
+        encoded_responses = model_to_eval.predict(response_list, type='response')
 
-        # get relevance scores and rankings
-        test_encoded_queries = encoded_queries[test_mask]
-        test_similarities = cosine_similarity(test_encoded_queries, encoded_responses)
-        answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1 
-        # answer rank should be shaped [Q x R]
+        # get matrix of shape [Q_test x Responses]
+        # this holds the relevance rankings of the responses to each test ques
+        test_similarities = cosine_similarity(encoded_queries[test_mask], encoded_responses)
+        answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1
 
-        print(f"\nanswer_ranks.shape: {answer_ranks.shape}")
-        print(f"query_idx.shape: {query_idx.shape}\n")
-        # get ranks of correct answers
+        # ranks_to_eval
         ranks_to_eval = [answer_rank[correct_answer_idx] 
                         for answer_rank, correct_answer_idx 
-                        in zip(answer_ranks, query_idx)]
+                        in zip( answer_ranks, response_idx_list )]
+
 
         # get eval metrics -> eval_kb_dict 
         # store in one large dict -> eval_dict
