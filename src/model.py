@@ -153,7 +153,36 @@ class GoldenRetriever:
         self.optimizer.apply_gradients(zip(grads, self.var_finetune))
 
         return cost_value.numpy().mean()
+
+    def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
+        """
+        Load the knowledge bases from SQL.
         
+        GoldenRetriever keeps the responses text in the 
+        text and vectorized_knowledge attributes 
+        as dictionaries indexed by their respective kb names
+        
+        TODO: load vectorized knowledge from precomputed weights
+
+        args:
+            cnxn_path: (str) string directory of the connection string 
+                            that needs to be fed into pyodbc
+        """
+        conn = pyodbc.connect(open(cnxn_path, 'r').read())
+        SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.id, dbo.query_db.query_string, \
+                                    dbo.kb_clauses.processed_string, dbo.kb_clauses.raw_string, dbo.kb_raw.kb_name, dbo.kb_raw.type FROM dbo.query_labels \
+                                    JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
+                                    JOIN dbo.kb_clauses ON dbo.query_labels.clause_id = dbo.kb_clauses.id \
+                                    JOIN dbo.kb_raw ON dbo.kb_clauses.raw_id = dbo.kb_raw.id''', conn)
+        conn.close()
+        
+        df = SQL_Query.set_index('id')
+        kb_names = df['kb_name'].unique() if len(kb_names) == 0 else kb_names
+        
+        for kb in kb_names:
+            self.text[kb] = list(df.loc[df.kb_name==kb].processed_string.unique())
+            self.vectorized_knowledge[kb] = self.predict(clean_txt(self.text[kb]), type='response')
+            
     def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
                 raw_text=None, is_faq=False, kb_name='default_kb'):
         """
