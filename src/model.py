@@ -43,7 +43,7 @@ class GoldenRetriever:
         self.opt_params = kwargs
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-qa/3')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
         self.init_signatures()
 
     def init_signatures(self):
