@@ -28,9 +28,8 @@ def init():
     retriever.load_kb(pdpa)
 
     # load SQL db
-    # kbs = kbh.load_sql_kb(cnxn_path = "db_cnxn_str.txt")
+    # kbs = kbh.load_sql_kb(cnxn_path = "db_cnxn_str.txt", kb_names=['PDPA','nrf'])
     # retriever.load_kb(kbs)
-
     return retriever
 
 gr = init()

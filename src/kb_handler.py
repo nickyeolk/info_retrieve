@@ -230,6 +230,31 @@ class kb_handler():
         
         return kbs
             
-            
+    def create_df(self):
+        """
+        Create pandas DataFrame in a similar format to dataloader.py
+        which may be used for finetuning and evaluation.
+
+        Importantly, if there is many-to-many matches between Queries and Responses
+        the returned dataframe will have duplicates
+
+        Return:
+        ------
+            df: (pd.DataFrame) contains the columns query_string, processed_string, kb_name
+        """
+        # get processed string
+        processed_string_series = ( self.responses.context_string.fillna('') + ' ' + self.responses.raw_string.fillna('')).str.replace('\n','')
+        processed_string_series.name = 'processed_string'
+
+        # transpose list of lists 
+        # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
+        q_r_idx = list(map(list, zip(*self.mapping)))
+
+        # Concat and create kb_name
+        df = pd.concat([self.queries.iloc[q_r_idx[0]].reset_index(drop=True), 
+                        processed_string_series.iloc[q_r_idx[1]].reset_index(drop=True)], 
+                        axis=1)
+        df = df.assign(kb_name = self.name)
         
+        return df
 
