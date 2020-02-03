@@ -51,11 +51,11 @@ def read_txt(path):
 def clean_txt(text):
     """
     Strips formatting
-    
     """
-    text=[x.replace('\n', '. ') for x in text] # not sure how newlines are tokenized
-    text=[x.replace('.. ', '. ').rstrip() for x in text] # remove artifact
-    return text
+    if isinstance(text, str):
+        return text.replace('\n', '. ').replace('.. ', '. ').rstrip()
+    elif hasattr(text, '__iter__'):
+        return [clean_txt(one_text) for one_text in text]
 
 def split_txt(text, qa=False):
     """
