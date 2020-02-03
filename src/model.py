@@ -33,7 +33,7 @@ class GoldenRetriever:
         initialize the model. load google USE embedding
    
         """
-
+        tf.config.set_visible_devices(tf.config.list_physical_devices()[0])
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         # self.vectorized_knowledge = {}
@@ -43,7 +43,7 @@ class GoldenRetriever:
         self.opt_params = kwargs
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-qa/3')
         self.init_signatures()
 
     def init_signatures(self):
@@ -78,12 +78,8 @@ class GoldenRetriever:
         elif type=='response':
             """
             A frequent error is OOM - Error recorded below.
-            This happens on frequently even on Kaggle Kernels with/without GPU on.
-
-            The trick seems to be to encode the responses separately
-            and to do so at a 120 tokens cap.
-
-            The nested logic below does this fix
+            The fix is to encode each entry separately.
+            This is implemented in a list comprehension.
             """
             if isinstance(text,str):
                 return self.response_encoder(input=tf.constant([text]), context=tf.constant([text]))['outputs']
@@ -107,7 +103,15 @@ class GoldenRetriever:
         similarity_score=cosine_similarity(self.kb[kb_name].vectorised_responses, self.predict([querystring], type=predict_type))
         sortargs=np.flip(similarity_score.argsort(axis=0))
         sortargs=[x[0] for x in sortargs]
-        sorted_ans=[self.kb[kb_name].responses.raw_string[i] for i in sortargs]
+
+        # sorted answer 
+        # conditional if there is a context string, 
+        # then include as a line-separated pre-text
+        sorted_ans=[]
+        for i in sortargs:
+            ans = self.kb[kb_name].responses.context_string.iloc[i] + '\n' + self.kb[kb_name].responses.raw_string.iloc[i] if self.kb[kb_name].responses.context_string.iloc[i] != '' else self.kb[kb_name].responses.raw_string.iloc[i]
+            sorted_ans.append(ans)
+
         if index:
             return sorted_ans[:top_k], sortargs[:top_k]
         return sorted_ans[:top_k], similarity_score[sortargs[:top_k]] 

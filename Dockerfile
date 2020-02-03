@@ -12,8 +12,8 @@ RUN pip install flask \
 && pip install tensorflow-gpu==2.0.0 \
 && pip install tensorflow-addons==0.6.0 \
 && pip install streamlit \
+&& pip install pyodbc
 && apt-get -y install wget \
 && wget https://finetunedweights.blob.core.windows.net/finetuned01/google_use_nrf_pdpa_tuned.tar.gz \
 && tar -zxvf google_use_nrf_pdpa_tuned.tar.gz
 CMD ["streamlit", "run", "--server.port", "5000","--server.headless","true", "--browser.serverAddress","0.0.0.0", "--server.enableCORS", "false",  "app2.py"]
-

@@ -114,7 +114,8 @@ class kb_handler():
         
         args:
         ----
-            path: (str) path to txt file
+            path: (str) path to txt file, 
+                        it may also be the raw text, if there is no txt. extention
             clause_sep: (str, default = '\n') Seperates the text file into their clauses
             inner_clause_sep: (str, default = '') In the case that either query or context 
                                                   string is encoded within the first few 
@@ -126,15 +127,20 @@ class kb_handler():
             context_idx: (int, default = None)
             kb_name: (str, default = name of path file)
         """
-        kb_name = kb_name if kb_name is not None else path.split('/')[-1].split('.')[0]
-        
-        """
-        1. Parse the text into its fields
-        """
-        # read the text
-        with open(path) as text_file:
-            self.raw_text = text_file.read()
-        
+
+        if path.endswith('txt'):
+            kb_name = kb_name if kb_name is not None else path.split('/')[-1].split('.')[0]
+            
+            """
+            1. Parse the text into its fields
+            """
+            # read the text
+            with open(path) as text_file:
+                self.raw_text = text_file.read()
+            
+        else:
+            self.raw_text = path
+
         clauses = [clause for clause in self.raw_text.split(clause_sep) if clause!='']
         clauses = pd.DataFrame(clauses, columns = ['raw_string']).assign(context_string='')
         query_list = []
@@ -169,7 +175,7 @@ class kb_handler():
                             
         return kb(kb_name, clauses, pd.DataFrame(query_list, columns=['query_string']), mappings)
             
-    def parse_csv(self, path, answer_col, query_col='', context_col='context_string'):
+    def parse_csv(self, path, answer_col, query_col='', context_col='context_string', kb_name=''):
         """
         Parse CSV file into kb format
         As pandas leverages csv.sniff to parse the csv, this function leverages pandas.
