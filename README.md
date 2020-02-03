@@ -80,6 +80,9 @@ contain a correct answer.
 |Google USE-QA|**0.387**|**0.519**|**0.590**|**0.648**|**0.698**|
 |TFIDF baseline|0.2457|0.3492|0.4127|0.4611|0.4989|
 
+## Updates v0.2
+Upgraded to Tensorflow 2
+
 ## Footnotes
 
 - <sup><a name="1">1</a></sup> Google Universal Sentence Encoder
