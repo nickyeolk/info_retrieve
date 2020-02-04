@@ -10,7 +10,6 @@ from tensorflow.keras.optimizers import Adam
 from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from .metric_learning import triplet_loss
 from .kb_handler import kb
-tf.config.set_visible_devices(tf.config.list_physical_devices()[0])
 
 class GoldenRetriever:
     """
@@ -33,7 +32,6 @@ class GoldenRetriever:
         initialize the model. load google USE embedding
    
         """
-        tf.config.set_visible_devices(tf.config.list_physical_devices()[0])
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         # self.vectorized_knowledge = {}
@@ -43,7 +41,7 @@ class GoldenRetriever:
         self.opt_params = kwargs
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-qa/3')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
         self.init_signatures()
 
     def init_signatures(self):

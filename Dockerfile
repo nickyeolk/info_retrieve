@@ -1,15 +1,14 @@
 FROM tensorflow/tensorflow:latest-py3
 ADD . /code
 WORKDIR /code
-RUN pip install --upgrade pip \
-&& pip install flask \
+RUN pip install flask \
 && pip install tensorflow-hub \
 && pip install pandas \
 && pip install scikit-learn \
-&& pip install tensorflow==2.1.0   \
-&& pip install tensorflow-estimator  \
-&& pip install tensorflow-text  \
-&& pip install tensorflow-addons \
+&& pip install tensorflow==2.0.0 \
+&& pip install tensorflow-estimator==2.0.1 \
+&& pip install tensorflow-text==2.0.1  \
+&& pip install tensorflow-addons==0.6.0 \
 && pip install streamlit \
 && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 && curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list \
