@@ -4,20 +4,6 @@ import tensorflow_hub as hub
 import numpy as np
 import datetime
 import tensorflow_text
-from sklearn.metrics.pairwise import cosine_similarity
-from tensorflow.keras.optimizers import Adam
-from transformers import AlbertTokenizer, TFAlbertModel
-from .utils import split_txt, read_txt, clean_txt, read_kb_csv
-from .metric_learning import triplet_loss
-from .bert_tokenization import FullTokenizer, get_masks, get_segments, get_ids, truncate_str, preprocess_one_str, preprocess_str
-from .kb_handler import kb
-
-import tensorflow as tf
-# import tensorflow_addons as tfa
-import tensorflow_hub as hub
-import numpy as np
-import datetime
-import tensorflow_text
 from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
 from tensorflow.keras.optimizers import Adam
