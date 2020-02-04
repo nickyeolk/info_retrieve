@@ -1,6 +1,62 @@
+"""
+kb_handler converts knowledge bases in various data types (txt, csv, sql) into a kb object.
+This kb object may then be further used for finetuning and eval
+"""
+
 import pandas as pd
 import numpy as np
 import pyodbc
+
+def unique_indexing(non_unique):
+    """
+    Convert a non_unique string pd.Series into a list of its indices of its unique list
+    
+    Args:
+    -----
+        non_unique: (pd.Series) containing non_unique values
+    
+    Return:
+    ------
+        idxed_non_uniques: (list) contains the index of non unique values
+                                  indexed by the unique values
+    """
+    unique = non_unique.drop_duplicates().tolist()
+    non_unique = non_unique.tolist()
+    idxed_non_uniques = [unique.index(each_non_unique) for each_non_unique in non_unique]
+    return idxed_non_uniques
+
+def generate_mappings(responses, queries):
+    """
+    Generate a list of list mappings between responses and queries
+    The length of responses and queries must be the same.
+    
+    
+    To note, the argument takes Responses then Queries ...
+    but the returned mappings list Queries then Responses 
+    for convenient use in downstream scripts
+
+    Args:
+    ----
+        responses: (pd.Series) contains query strings, may be non unique
+        queries: (pd.Series) contains query strings, may be non unique
+
+    Return:
+    ------
+        mappings: (list of list of ints) contains mappings between queries responses
+    """
+    assert len(responses) == len(queries), "length of responses and queries do not match!"
+
+    # Generate the mappings from responses and queries
+    response_idx = unique_indexing(responses)
+    query_idx = unique_indexing(queries)
+
+    # create mapping from query-response indices
+    mappings = []
+    for one_query_idx, one_response_idx in zip(query_idx, response_idx):
+        mappings.append([one_query_idx, one_response_idx])
+
+    return mappings
+
 
 class kb:
     """
@@ -35,8 +91,37 @@ class kb:
         self.queries = queries
         self.mapping = mapping
         self.vectorised_responses = vectorised_responses
+                
+    def create_df(self):
+        """
+        Create pandas DataFrame in a similar format to dataloader.py
+        which may be used for finetuning and evaluation.
+
+        Importantly, if there is many-to-many matches between Queries and Responses
+        the returned dataframe will have duplicates
+
+        Return:
+        ------
+            df: (pd.DataFrame) contains the columns query_string, processed_string, kb_name
+        """
+        # get processed string
+        processed_string_series = ( self.responses.context_string.fillna('') + ' ' + self.responses.raw_string.fillna('')).str.replace('\n','')
+        processed_string_series.name = 'processed_string'
+
+        # transpose list of lists 
+        # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
+        q_r_idx = list(map(list, zip(*self.mapping)))
+
+        # Concat and create kb_name
+        df = pd.concat([self.queries.iloc[q_r_idx[0]].reset_index(drop=True), 
+                        processed_string_series.iloc[q_r_idx[1]].reset_index(drop=True)], 
+                        axis=1)
+        df = df.assign(kb_name = self.name)
+
+        return df
     
-    
+
+
 class kb_handler():
     """
     kb_handler loads knowledge bases from text files
@@ -72,14 +157,14 @@ class kb_handler():
                                    query_col: 'query_string'
                                   })
             
-        queries, mappings = [], []
+        queries = []
         unique_responses_df = df.loc[~df.duplicated(), ['raw_string', 'context_string']].drop_duplicates().reset_index(drop=True)
         
         if query_col=='':
             # if there are no query columns
             # there will be no query or mappings to return
             # simply return unique responses now
-            return unique_responses_df, pd.DataFrame(), pd.DataFrame()
+            return unique_responses_df, pd.DataFrame(), []
         
         """
         Handle many-to-many matching between the queries and responses
@@ -88,20 +173,12 @@ class kb_handler():
             3. Create mappings from the indices of these non-unique queries and responses
         """
         contexted_answer = df.loc[:,'context_string'].fillna('') + ' ' + df.loc[:,'raw_string'].fillna('')
-        response_list = contexted_answer.tolist()
-        unique_response_list = contexted_answer.drop_duplicates().tolist()
+        query_string_series = df.loc[:,'query_string']
 
-        question_list = df.loc[:,'query_string'].tolist()
-        unique_question_list = df.loc[:,'query_string'].drop_duplicates().tolist()
+        mappings = generate_mappings(contexted_answer, query_string_series)
 
-        response_idx = [unique_response_list.index(response) for response in response_list]
-        query_idx = [unique_question_list.index(question) for question in question_list]
-        
-        # create mapping from query-response indices
-        for one_query_idx, one_response_idx in zip(query_idx, response_idx):
-            mappings.append([one_query_idx, one_response_idx])
-        
-        unique_query_df = df.loc[:,['query_string']].drop_duplicates().reset_index(drop=True)
+        # get unique query strings
+        unique_query_df = query_string_series.drop_duplicates().reset_index(drop=True)
         
         return kb(kb_name, unique_responses_df, unique_query_df, mappings)
     
@@ -193,7 +270,7 @@ class kb_handler():
         kb = self.parse_df(kb_name, df, answer_col, query_col, context_col)
         return kb
     
-    def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
+    def load_sql_kb(self, cnxn_path = "/polyaxon-data/goldenretriever/db_cnxn_str.txt", kb_names=[]):
         """
         Load the knowledge bases from SQL.
         
@@ -210,51 +287,36 @@ class kb_handler():
                                          else if empty, parse all of them
         """
         conn = pyodbc.connect(open(cnxn_path, 'r').read())
-        
-        SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.id, dbo.query_db.query_string, \
-                                     dbo.kb_clauses.context_string, dbo.kb_clauses.processed_string, dbo.kb_clauses.raw_string, dbo.kb_raw.kb_name, dbo.kb_raw.type FROM dbo.query_labels \
-                                     JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
-                                     JOIN dbo.kb_clauses ON dbo.query_labels.clause_id = dbo.kb_clauses.id \
-                                     JOIN dbo.kb_raw ON dbo.kb_clauses.raw_id = dbo.kb_raw.id''', conn)
 
+        SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.clause_id, dbo.query_labels.query_id, dbo.query_db.query_string, \
+                                    dbo.kb_clauses.context_string, dbo.kb_clauses.processed_string, dbo.kb_clauses.raw_string, dbo.kb_raw.kb_name, dbo.kb_raw.type FROM dbo.query_labels \
+                                    JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
+                                    JOIN dbo.kb_clauses ON dbo.query_labels.clause_id = dbo.kb_clauses.id \
+                                    JOIN dbo.kb_raw ON dbo.kb_clauses.raw_id = dbo.kb_raw.id''', conn)
         conn.close()
         
-        df = SQL_Query.set_index('id')
-        kb_names = df['kb_name'].unique() if len(kb_names) == 0 else kb_names
+        kb_names = list(SQL_Query['kb_name'].unique()) if len(kb_names) == 0 else kb_names
+        
+        # These knowledge bases are too large, will exclude for evaluation stage for now
+        kb_excluded = ['life-insurance', 'auto-insurance', 'medicare-insurance']
+        
+        for name in kb_excluded:
+            kb_names.remove(name)
         
         kbs = []
         for kb_name in kb_names:
-            one_kb_df = df.loc[df.kb_name==kb_name]
-            kb = self.parse_df(kb_name, one_kb_df, 'raw_string', query_col='query_string', context_col='context_string')
-            kbs.append(kb)
+            
+            kb_df = SQL_Query.loc[SQL_Query.kb_name == kb_name]
+
+            # load name, responses, queries, mapping into kb object
+            indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('') # fillna: not all responses have a context_string
+            indexed_queries = kb_df.loc[:,['query_id', 'query_string']]
+            mappings = generate_mappings(kb_df.processed_string, kb_df.query_string)
+            
+            kb_ = kb(kb_name, indexed_responses, indexed_queries, mappings)
+
+            kbs.append(kb_)
         
         return kbs
-            
-    def create_df(self):
-        """
-        Create pandas DataFrame in a similar format to dataloader.py
-        which may be used for finetuning and evaluation.
 
-        Importantly, if there is many-to-many matches between Queries and Responses
-        the returned dataframe will have duplicates
-
-        Return:
-        ------
-            df: (pd.DataFrame) contains the columns query_string, processed_string, kb_name
-        """
-        # get processed string
-        processed_string_series = ( self.responses.context_string.fillna('') + ' ' + self.responses.raw_string.fillna('')).str.replace('\n','')
-        processed_string_series.name = 'processed_string'
-
-        # transpose list of lists 
-        # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
-        q_r_idx = list(map(list, zip(*self.mapping)))
-
-        # Concat and create kb_name
-        df = pd.concat([self.queries.iloc[q_r_idx[0]].reset_index(drop=True), 
-                        processed_string_series.iloc[q_r_idx[1]].reset_index(drop=True)], 
-                        axis=1)
-        df = df.assign(kb_name = self.name)
-        
-        return df
 
