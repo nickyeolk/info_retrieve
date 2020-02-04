@@ -7,23 +7,21 @@ import numpy as np
 import logging
 import random
 import sys
+sys.path.append('/polyaxon-data/goldenretriever')
 
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.model_selection import train_test_split
 from scipy.stats.mstats import rankdata
+from absl import flags, app
 from polyaxon_client.tracking import Experiment, get_log_level
-
-sys.path.append('/polyaxon-data/goldenretriever')
 
 from src.model import GoldenRetriever, GoldenRetriever_BERT, GoldenRetriever_ALBERT
 from src.dataloader import kb_train_test_split
 from src.eval_model import mrr, recall_at_n, get_eval_dict
+from src.kb_handler import kb, kb_handler
 
 
-flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
-
-# These knowledge bases are too large, will exclude for evaluation stage for now
-kb_excluded = ['life-insurance', 'auto-insurance', 'medicare-insurance']
 
 # For logging
 def setup_logging():
@@ -36,7 +34,7 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 logger.info("Starting experiment")
-# experiment = Experiment()
+experiment = Experiment()
 
 
 # eg. 'albert' or 'bert' or 'USE'
@@ -101,12 +99,6 @@ flags.DEFINE_integer(
     "than this will be padded."
 )
 
-# eg. 10
-flags.DEFINE_integer(
-    "save_model_epochs_steps", None,
-    "How often to save the model "
-)
-
 # eg. 'cosine', 'contrastive', 'triplet'
 flags.DEFINE_string(
     "loss_type", None,
@@ -131,7 +123,6 @@ flags.DEFINE_string(
     "To define whether to train or evaluate or both train and evaluate the chosen model"
 )
 
-
 # eg. 5
 flags.DEFINE_integer(
     "early_stopping_steps", None,
@@ -139,22 +130,28 @@ flags.DEFINE_integer(
 )
 
 
+def _flags_to_file(flag_objs, file_path):
+    with open(file_path, 'w+') as f:
+        for flag in flag_objs:
+            f.write("--" + flag.name + "=" + str(flag.value) + "\n")
+
+
 def _generate_neg_ans(df, train_dict):
     
     np.random.seed(FLAGS.random_seed)
 
     for kb, ans_pos_idxs in train_dict.items():
-
         keys = []
-        ans_neg_idxs = []
+        shuffled_ans_pos_idxs = ans_pos_idxs.copy()
+        random.shuffle(shuffled_ans_pos_idxs)
+        ans_neg_idxs = shuffled_ans_pos_idxs
+        
+        for i in range(len(ans_neg_idxs)):
+            v=0
+            while ans_pos_idxs[i] == ans_neg_idxs[i]:
+                ans_neg_idxs[i] = shuffled_ans_pos_idxs[v]
+                v += 1
 
-        for i in range(len(ans_pos_idxs)):
-            ans_neg = df.loc[ans_pos_idxs].processed_string.copy().tolist()
-            del ans_neg[i]
-            shuffle_ind = [ii for ii in range(1, len(ans_neg)+1)]
-            random.shuffle(shuffle_ind)
-            ans_neg_idx = shuffle_ind[0]
-            ans_neg_idxs.append(ans_neg_idx)
 
         keys.append(ans_pos_idxs)
         keys.append(np.array(ans_neg_idxs))
@@ -191,8 +188,10 @@ def _create_dataset(data_type, batch_size, query=[], response=[], neg_response=[
         
         return dataset.shuffle(128).batch(batch_size)
 
+
 def _convert_bytes_to_string(byte):
     return str(byte, 'utf-8')
+
 
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
@@ -214,7 +213,24 @@ def main(_):
     # Create training set based on chosen random seed
     logger.info("Generating training set")
 
-    df, train_dict, test_dict, train_idx_all, test_idx_all = kb_train_test_split(0.3, FLAGS.random_seed)
+    # Get df using kb_handler
+    kbh = kb_handler()
+    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt')
+
+    train_dict = dict()
+    test_dict = dict()
+    df_list = []
+
+    for single_kb in kbs:
+        kb_df = single_kb.create_df()
+        df_list.append(kb_df)
+        idx = np.array(kb_df.index.tolist())
+        train_idx, test_idx = train_test_split(idx, test_size=0.2, random_state=FLAGS.random_seed)
+        
+        train_dict[single_kb.name] = train_idx
+        test_dict[single_kb.name] = test_idx
+    
+    df = pd.concat(df_list)
 
     train_dict_with_neg = _generate_neg_ans(df, train_dict)
     train_pos_idxs = np.concatenate([v[0] for k,v in train_dict_with_neg.items()], axis=0)
@@ -265,6 +281,7 @@ def main(_):
                     r = list(r.numpy())
                     neg_r = list(neg_r.numpy())
 
+                    # Some of the strings in the knowledge bases are in byte format
                     q_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in q]
                     r_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in r]
                     neg_r_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in neg_r]
@@ -290,12 +307,15 @@ def main(_):
                 logger.info(f'Number of batches trained: {batch_counter}')
                 logger.info(f'Loss for Epoch #{i}: {cost_mean_total}')
 
+                # Get model for first epoch
                 if i == 0:
                     lowest_cost = cost_mean_total
                     best_epoch = i
                     earlystopping_counter = 0
                     os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
                     model.export(os.path.join(MODEL_BEST_DIR, str(i)))
+                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                                  os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
 
                 # Model checkpoint
                 if cost_mean_total < lowest_cost:
@@ -303,23 +323,28 @@ def main(_):
                     lowest_cost = cost_mean_total
                     os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
                     model.export(os.path.join(MODEL_BEST_DIR, str(i)))
+                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                                  os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
                     logger.info(f"Saved best model with cost of {lowest_cost} for Epoch #{i}")
                 else:
-                    # Early stopping
+                    # Activate early stopping counter
                     earlystopping_counter += 1
 
-                # experiment.log_metrics(steps=i, loss=cost_mean_total)
+                experiment.log_metrics(steps=i, loss=cost_mean_total)
 
+                # Early stopping
                 if earlystopping_counter == FLAGS.early_stopping_steps:
                     logger.info("Early stop executed")
                     model.export(MODEL_LAST_DIR)
+                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                                  os.path.join(MODEL_LAST_DIR, 'train.cfg'))
                     break
                 
                 epoch_end_time = datetime.datetime.now()
                 logger.info(f"Time Taken for Epoch #{i}: {epoch_end_time - epoch_start_time}")
                 logger.info(f"Average time Taken for each batch: {(epoch_end_time - epoch_start_time)/batch_counter}")
 
-    # Restore model
+    # Restore best model. User will have to define path to model if only eval is done.
     if FLAGS.task_type == 'train_eval':
         logger.info("Restoring model")
         model.restore(os.path.join(MODEL_BEST_DIR, str(best_epoch)))
@@ -364,25 +389,6 @@ def main(_):
             response_idx_list = [response_list.index(nonunique_response_string) 
                                 for nonunique_response_string in response_list_w_duplicates]
             response_idx_list = np.array(response_idx_list)[[test_mask]]
-
-            # # get encoded queries and responses
-            # test_dataset = _create_dataset('predict', FLAGS.predict_batch_size, query=query_list, response=response_list)
-            
-            # def _encode_test_dataset(query_batch, response_batch):
-            #     encoded_query_batch = model.predict(query_list, type='query')
-            #     encoded_response_batch = model.predict(response_list, type='response')
-            #     return encoded_query_batch, encoded_response_batch
-            
-            # encoded_query_batches = []
-            # encoded_response_batches = []
-            # for query_batch, response_batch in test_dataset:
-            #     encoded_query_batch, encoded_response_batch = _encode_test_dataset(query_batch, response_batch)
-            #     encoded_query_batches.append(encoded_query_batch)
-            #     encoded_response_batches.append(encoded_response_batch)
-            #     break
-            
-            # encoded_queries = np.array([q for batch in encoded_query_batches for q in batch])
-            # encoded_responses = np.array([r for batch in encoded_response_batches for r in batch])
             
             encoded_queries = model.predict(query_list, type='query')
             encoded_responses = model.predict(response_list, type='response')
@@ -432,65 +438,8 @@ def main(_):
     logger.info(f"Time Taken for Eval : {eval_end_time - eval_start_time}")
 
 if __name__ == "__main__":
-    tf.compat.v1.app.run()
+    app.run(main)
 
-
-
-# # Required parameters
-# model_name
-# random_seed
-# main_dir
-# save_model_dir
-# train_val_test_dir
-# results_dir
-# logs_dir
-# train_batch_size
-# predict_batch_size
-# learning_rate
-# beta_1
-# beta_2
-# epsilon
-# num_epochs
-# max_seq_length
-# save_model_epochs_steps
-# loss_type
-# margin
-# task_type
-# early_stopping_steps
-
-# python -m src.finetune_eval \
-#     --model_name='USE' \
-#     --random_seed=42 \
-#     --train_batch_size=16 \
-#     --predict_batch_size=16 \
-#     --learning_rate=5e-5 \
-#     --beta_1=0.9 \
-#     --beta_2=0.999 \
-#     --epsilon=1e-07 \
-#     --num_epochs=1 \
-#     --max_seq_length=512 \
-#     --save_model_epochs_steps=10 \
-#     --loss_type='triplet' \
-#     --margin=0.3 \
-#     --task_type='train_eval'
-#     --early_stopping_steps=5
-
-# python /polyaxon-data/aiap4/workspace/kenneth_wang/goldenretriever/src/finetune_eval.py \
-#     --model_name='USE' \
-#     --random_seed=42 \
-#     --train_batch_size=16 \
-#     --predict_batch_size=16 \
-#     --learning_rate=5e-5 \
-#     --beta_1=0.9 \
-#     --beta_2=0.999 \
-#     --epsilon=1e-07 \
-#     --num_epochs=1 \
-#     --max_seq_length=512 \
-#     --save_model_epochs_steps=10 \
-#     --loss_type='triplet' \
-#     --margin=0.3 \
-#     --task_type='train_eval'
-#     --early_stopping_steps=5
 
 # python /polyaxon-data/goldenretriever/src/finetune_eval.py \
 #     --model_name='albert' \
@@ -503,7 +452,6 @@ if __name__ == "__main__":
 #     --epsilon=1e-07 \
 #     --num_epochs=1 \
 #     --max_seq_length=256 \
-#     --save_model_epochs_steps=10 \
 #     --loss_type='triplet' \
 #     --margin=0.3 \
 #     --task_type='train_eval' \
