@@ -1,18 +1,38 @@
 import streamlit as st
+import pandas as pd
+
 from src.model import GoldenRetriever
+from src.kb_handler import kb_handler
+
 
 @st.cache(allow_output_mutation=True)
 def init():
     retriever = GoldenRetriever()
     #retriever.restore('./google_use_nrf_pdpa_tuned/variables-0')
-    retriever.load_csv_kb(path_to_kb='./data/pdpa.csv', cutoff=196, kb_name='pdpa')
-    retriever.load_kb(path_to_kb='./data/aiap.txt', is_faq=True, kb_name='aiap')
-    retriever.load_kb(path_to_kb='./data/resale_tnc.txt', kb_name='resale_tnc')
-    # retriever.load_kb(path_to_kb='./data/fund_guide_tnc_full.txt', kb_name='nrf')
+
+    # parse text into kb
+    kbh = kb_handler()
+    resale_tnc = kbh.parse_text('data/resale_tnc.txt', 
+                                   clause_sep='\n\n', inner_clause_sep="\n", 
+                                   context_idx=0,
+                                   kb_name = 'resale_tnc'
+                                  )
+    aiap = kbh.parse_text('data/aiap.txt', clause_sep='\n\n', inner_clause_sep="\n", query_idx=0)
+    pdpa = kbh.parse_csv('data/pdpa.csv', 
+                         answer_col='answer', query_col='question', context_col='meta', 
+                         kb_name='pdpa')
+
+    # load kbs
+    retriever.load_kb(resale_tnc)
+    retriever.load_kb(aiap)
+    retriever.load_kb(pdpa)
+
+    # load SQL db
+    # kbs = kbh.load_sql_kb(cnxn_path = "db_cnxn_str.txt", kb_names=['PDPA','nrf'])
+    # retriever.load_kb(kbs)
     return retriever
 
 gr = init()
-
 
 st.title('GoldenRetriever')
 st.header('This Information Retrieval demo allows you to query FAQs, T&Cs, or your own knowledge base in natural language.')
@@ -40,7 +60,14 @@ top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
 if st.button('Fetch') or (data != kb_to_starqn[kb]): #So the answer will not appear right away
     if kb=='raw_kb':
-        gr.load_kb(raw_text=kb_raw, kb_name='raw_kb')
+        # load raw text kb
+        kbh = kb_handler()
+        raw_kb = kbh.parse_text(kb_raw,
+                                clause_sep='\n\n',
+                                kb_name = 'raw_kb'
+                                )
+        gr.load_kb(raw_kb)
+        
     prediction, scores = gr.make_query(data, top_k=int(top_k), kb_name=kb)
     qn_string="""<h3><text>Question: </text>{}</h3>""".format(data)
     st.markdown(qn_string, unsafe_allow_html=True)

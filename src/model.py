@@ -1,15 +1,17 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_hub as hub
+import pandas as pd
 import numpy as np
 import datetime
 import tensorflow_text
-from .utils import split_txt, read_txt, clean_txt, read_kb_csv
+import pyodbc
 from sklearn.metrics.pairwise import cosine_similarity
 from tensorflow.keras.optimizers import Adam
 
+from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from .metric_learning import triplet_loss
-
+from .kb_handler import kb
 
 class GoldenRetriever:
     """
@@ -32,16 +34,16 @@ class GoldenRetriever:
         initialize the model. load google USE embedding
    
         """
-
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
-        self.vectorized_knowledge = {}
-        self.text = {}
-        self.questions = {}
+        # self.vectorized_knowledge = {}
+        # self.text = {}
+        # self.questions = {}
+        self.kb = {}
         self.opt_params = kwargs
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/2')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
         self.init_signatures()
 
     def init_signatures(self):
@@ -68,14 +70,22 @@ class GoldenRetriever:
 
         """
         if type=='query':
-            return self.question_encoder(tf.constant([text]))['outputs']
+            if isinstance(text,str):
+                return self.question_encoder(tf.constant([text]))['outputs']
             # return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
+            elif hasattr(text, '__iter__'):
+                return tf.concat([self.question_encoder(tf.constant([one_text]))['outputs'] for one_text in text], axis=0)
         elif type=='response':
-            if not context:
-                context = text
-            return self.response_encoder(input=tf.constant(text),
-                                         context=tf.constant(context))['outputs']
-        else: print('Type of prediction not defined')
+            """
+            A frequent error is OOM - Error recorded below.
+            The fix is to encode each entry separately.
+            This is implemented in a list comprehension.
+            """
+            if isinstance(text,str):
+                return self.response_encoder(input=tf.constant([text]), context=tf.constant([text]))['outputs']
+            # return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
+            elif hasattr(text, '__iter__'):
+                return tf.concat([self.response_encoder(input=tf.constant([one_text]), context=tf.constant([one_text]))['outputs'] for one_text in text], axis=0)
         
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
         """
@@ -90,10 +100,18 @@ class GoldenRetriever:
         return the top K vectorized answers and their scores
 
         """
-        similarity_score=cosine_similarity(self.vectorized_knowledge[kb_name], self.predict([querystring], type=predict_type))
+        similarity_score=cosine_similarity(self.kb[kb_name].vectorised_responses, self.predict([querystring], type=predict_type))
         sortargs=np.flip(similarity_score.argsort(axis=0))
         sortargs=[x[0] for x in sortargs]
-        sorted_ans=[self.text[kb_name][i] for i in sortargs]
+
+        # sorted answer 
+        # conditional if there is a context string, 
+        # then include as a line-separated pre-text
+        sorted_ans=[]
+        for i in sortargs:
+            ans = self.kb[kb_name].responses.context_string.iloc[i] + '\n' + self.kb[kb_name].responses.raw_string.iloc[i] if self.kb[kb_name].responses.context_string.iloc[i] != '' else self.kb[kb_name].responses.raw_string.iloc[i]
+            sorted_ans.append(ans)
+
         if index:
             return sorted_ans[:top_k], sortargs[:top_k]
         return sorted_ans[:top_k], similarity_score[sortargs[:top_k]] 
@@ -154,75 +172,64 @@ class GoldenRetriever:
 
         return cost_value.numpy().mean()
 
-    def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
+    def load_kb(self, kb_):
         """
-        Load the knowledge bases from SQL.
-        
-        GoldenRetriever keeps the responses text in the 
-        text and vectorized_knowledge attributes 
-        as dictionaries indexed by their respective kb names
-        
-        TODO: load vectorized knowledge from precomputed weights
+        Load the knowledge base or bases
 
         args:
-            cnxn_path: (str) string directory of the connection string 
-                            that needs to be fed into pyodbc
+        ----
+            kb: (kb object as defined in kb_handler)
         """
-        conn = pyodbc.connect(open(cnxn_path, 'r').read())
-        SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.id, dbo.query_db.query_string, \
-                                    dbo.kb_clauses.processed_string, dbo.kb_clauses.raw_string, dbo.kb_raw.kb_name, dbo.kb_raw.type FROM dbo.query_labels \
-                                    JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
-                                    JOIN dbo.kb_clauses ON dbo.query_labels.clause_id = dbo.kb_clauses.id \
-                                    JOIN dbo.kb_raw ON dbo.kb_clauses.raw_id = dbo.kb_raw.id''', conn)
-        conn.close()
-        
-        df = SQL_Query.set_index('id')
-        kb_names = df['kb_name'].unique() if len(kb_names) == 0 else kb_names
-        
-        for kb in kb_names:
-            self.text[kb] = list(df.loc[df.kb_name==kb].processed_string.unique())
-            self.vectorized_knowledge[kb] = self.predict(clean_txt(self.text[kb]), type='response')
-            
-    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
-                raw_text=None, is_faq=False, kb_name='default_kb'):
-        """
-        Give either path to .txt document or list of clauses.
-        For text document, each clause is separated by 2 newlines ('\\n\\n')
-        
-        Parameters:
-        is_faq(boolean): can be in the format of FAQ. 
+        if type(kb_) == kb:
+            context_and_raw_string = kb_.responses.context_string.fillna('') + ' ' + kb_.responses.raw_string.fillna('')
+            kb_.vectorised_responses = self.predict(clean_txt(context_and_raw_string), type='response')
+            self.kb[kb_.name] = kb_
+            print(f'{datetime.datetime.now()} : kb loaded - {kb_.name} ')
 
-        Returns:
-        create the knowledge base
+        elif hasattr(kb_, '__iter__'):
+            for one_kb in kb_:
+                self.load_kb(one_kb)
 
-        """
-        if text_list:
-            self.text[kb_name] = text_list
-            if is_faq:
-                self.questions[kb_name] = question_list
-        elif path_to_kb:
-            if is_faq:
-                self.text[kb_name], self.questions[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
-            else:
-                self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
-        elif raw_text:
-            delim = '\n'
-            self.text[kb_name] = split_txt([front+delim for front in raw_text.split('\n')])
-        else: raise NameError('invalid kb input!')
-        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
-        print('knowledge base lock and loaded!')
+    # def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
+    #             raw_text=None, is_faq=False, kb_name='default_kb'):
+    #     """
+    #     Give either path to .txt document or list of clauses.
+    #     For text document, each clause is separated by 2 newlines ('\\n\\n')
         
-    def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
-                    query_col='question', answer_str_col='answer', cutoff=None):
+    #     Parameters:
+    #     is_faq(boolean): can be in the format of FAQ. 
 
-        """
-        load the document in csv format
+    #     Returns:
+    #     create the knowledge base
 
-        """
-        self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
-                            query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
-        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
-        print('knowledge base (csv) lock and loaded!')
+    #     """
+    #     if text_list:
+    #         self.text[kb_name] = text_list
+    #         if is_faq:
+    #             self.questions[kb_name] = question_list
+    #     elif path_to_kb:
+    #         if is_faq:
+    #             self.text[kb_name], self.questions[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
+    #         else:
+    #             self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
+    #     elif raw_text:
+    #         delim = '\n'
+    #         self.text[kb_name] = split_txt([front+delim for front in raw_text.split('\n')])
+    #     else: raise NameError('invalid kb input!')
+    #     self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
+    #     print('knowledge base lock and loaded!')
+        
+    # def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
+    #                 query_col='question', answer_str_col='answer', cutoff=None):
+
+    #     """
+    #     load the document in csv format
+
+    #     """
+    #     self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
+    #                         query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
+    #     self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
+    #     print('knowledge base (csv) lock and loaded!')
         
     def export(self, savepath='fine_tuned'):
         '''
