@@ -34,7 +34,7 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 logger.info("Starting experiment")
-experiment = Experiment()
+# experiment = Experiment()
 
 
 # eg. 'albert' or 'bert' or 'USE'
@@ -193,6 +193,17 @@ def _convert_bytes_to_string(byte):
     return str(byte, 'utf-8')
 
 
+def gen(batch_size, query, response, neg_response):
+    num_samples = len(query)
+    
+    for offset in range(0, num_samples, batch_size):
+        q_batch = query[offset:offset+batch_size]
+        r_batch = response[offset:offset+batch_size]
+        neg_r_batch = response[offset:offset+batch_size]
+    
+        yield(q_batch, r_batch, neg_r_batch)
+
+
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
@@ -215,7 +226,7 @@ def main(_):
 
     # Get df using kb_handler
     kbh = kb_handler()
-    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt')
+    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['nrf', 'PDPA'])
 
     train_dict = dict()
     test_dict = dict()
@@ -239,10 +250,12 @@ def main(_):
     train_query = df.loc[train_pos_idxs].query_string.tolist()
     train_response = df.loc[train_pos_idxs].processed_string.tolist()
     train_neg_response = df.loc[train_neg_idxs].processed_string.tolist()
+    
+    train_dataset_loader = gen(FLAGS.train_batch_size, train_query, train_response, train_neg_response)
 
     # Create training tf dataset generator
     logger.info("Creating dataset")
-    train_dataset = _create_dataset('train', FLAGS.train_batch_size, query=train_query, response=train_response, neg_response=train_neg_response)
+    # train_dataset = _create_dataset('train', FLAGS.train_batch_size, query=train_query, response=train_response, neg_response=train_neg_response)
 
     # Instantiate chosen model
     logger.info(f"Instantiating model: {FLAGS.model_name}")
@@ -275,30 +288,13 @@ def main(_):
                 cost_mean_total = 0
         
                 batch_counter = 0
-                for q, r, neg_r in train_dataset:
-
-                    q = list(q.numpy())
-                    r = list(r.numpy())
-                    neg_r = list(neg_r.numpy())
-
-                    # Some of the strings in the knowledge bases are in byte format
-                    q_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in q]
-                    r_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in r]
-                    neg_r_str = [x if isinstance(x, str) else _convert_bytes_to_string(x) for x in neg_r]
+                for q, r, neg_r in train_dataset_loader:
 
                     if batch_counter == 0:
                         logger.info(f"Training batches of size: {len(r)}")
         
-                    # USE requires context
-                    if FLAGS.model_name == 'USE':
-                        context = r_str
-                        neg_answer_context = neg_r_str
-                    else:
-                        context = []
-                        neg_answer_context = []
-                        
-                    cost_mean_batch = model.finetune(question=q_str, answer=r_str, context=context, \
-                                                     neg_answer=neg_r_str, neg_answer_context=neg_answer_context, \
+                    cost_mean_batch = model.finetune(question=q, answer=r, context=r, \
+                                                     neg_answer=neg_r, neg_answer_context=neg_r, \
                                                      margin=FLAGS.margin, loss=FLAGS.loss_type)
     
                     cost_mean_total += cost_mean_batch
@@ -330,7 +326,7 @@ def main(_):
                     # Activate early stopping counter
                     earlystopping_counter += 1
 
-                experiment.log_metrics(steps=i, loss=cost_mean_total)
+                # experiment.log_metrics(steps=i, loss=cost_mean_total)
 
                 # Early stopping
                 if earlystopping_counter == FLAGS.early_stopping_steps:
@@ -359,57 +355,54 @@ def main(_):
 
     for kb_name in df.kb_name.unique():
 
-        if kb_name in kb_excluded:
-            pass
-        else:
-            logger.info(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
+        logger.info(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
 
-            # dict stores eval metrics and relevance ranks
-            eval_kb_dict = {}
+        # dict stores eval metrics and relevance ranks
+        eval_kb_dict = {}
 
-            # test-mask is a int array
-            # that chooses specific test questions
-            # e.g.  test_mask [True, True, False]
-            #       query_idx = [0,1]
-            kb_df = df.loc[df.kb_name == kb_name]
-            kb_idx = df.loc[df.kb_name == kb_name].index
-            test_mask = np.isin(kb_idx, test_dict[kb_name])
-            # test_idx_mask = np.arange(len(kb_df))[test_mask]
+        # test-mask is a int array
+        # that chooses specific test questions
+        # e.g.  test_mask [True, True, False]
+        #       query_idx = [0,1]
+        kb_df = df.loc[df.kb_name == kb_name]
+        kb_idx = df.loc[df.kb_name == kb_name].index
+        test_mask = np.isin(kb_idx, test_dict[kb_name])
+        # test_idx_mask = np.arange(len(kb_df))[test_mask]
 
-            # get string queries and responses, unduplicated as a list
-            kb_df = kb_df.reset_index(drop=True)
-            query_list = kb_df.query_string.tolist()
-            response_list_w_duplicates = kb_df.processed_string.tolist()
-            response_list = kb_df.processed_string.drop_duplicates().tolist() 
+        # get string queries and responses, unduplicated as a list
+        kb_df = kb_df.reset_index(drop=True)
+        query_list = kb_df.query_string.tolist()
+        response_list_w_duplicates = kb_df.processed_string.tolist()
+        response_list = kb_df.processed_string.drop_duplicates().tolist() 
 
-            # this index list is important
-            # it lists the index of the correct answer for every question
-            # e.g. for 20 questions mapped to 5 repeated answers
-            # it has 20 elements, each between 0 and 4
-            response_idx_list = [response_list.index(nonunique_response_string) 
-                                for nonunique_response_string in response_list_w_duplicates]
-            response_idx_list = np.array(response_idx_list)[[test_mask]]
-            
-            encoded_queries = model.predict(query_list, type='query')
-            encoded_responses = model.predict(response_list, type='response')
+        # this index list is important
+        # it lists the index of the correct answer for every question
+        # e.g. for 20 questions mapped to 5 repeated answers
+        # it has 20 elements, each between 0 and 4
+        response_idx_list = [response_list.index(nonunique_response_string) 
+                            for nonunique_response_string in response_list_w_duplicates]
+        response_idx_list = np.array(response_idx_list)[[test_mask]]
+        
+        encoded_queries = model.predict(query_list, type='query')
+        encoded_responses = model.predict(response_list, type='response')
 
-            # get matrix of shape [Q_test x Responses]
-            # this holds the relevance rankings of the responses to each test ques
-            test_similarities = cosine_similarity(encoded_queries[test_mask], encoded_responses)
-            answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1
+        # get matrix of shape [Q_test x Responses]
+        # this holds the relevance rankings of the responses to each test ques
+        test_similarities = cosine_similarity(encoded_queries[test_mask], encoded_responses)
+        answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1
 
-            # ranks_to_eval
-            ranks_to_eval = [answer_rank[correct_answer_idx] 
-                            for answer_rank, correct_answer_idx 
-                            in zip( answer_ranks, response_idx_list )]
+        # ranks_to_eval
+        ranks_to_eval = [answer_rank[correct_answer_idx] 
+                        for answer_rank, correct_answer_idx 
+                        in zip( answer_ranks, response_idx_list )]
 
 
-            # get eval metrics -> eval_kb_dict 
-            # store in one large dict -> eval_dict
-            eval_kb_dict = get_eval_dict(ranks_to_eval)
-            eval_kb_dict['answer_ranks'] = answer_ranks
-            eval_kb_dict['ranks_to_eval'] = ranks_to_eval
-            eval_dict[kb_name] = eval_kb_dict.copy()
+        # get eval metrics -> eval_kb_dict 
+        # store in one large dict -> eval_dict
+        eval_kb_dict = get_eval_dict(ranks_to_eval)
+        eval_kb_dict['answer_ranks'] = answer_ranks
+        eval_kb_dict['ranks_to_eval'] = ranks_to_eval
+        eval_dict[kb_name] = eval_kb_dict.copy()
 
     # overall_eval is a dataframe that 
     # tracks performance across the different knowledge bases
@@ -442,7 +435,7 @@ if __name__ == "__main__":
 
 
 # python /polyaxon-data/goldenretriever/src/finetune_eval.py \
-#     --model_name='albert' \
+#     --model_name='USE' \
 #     --random_seed=42 \
 #     --train_batch_size=2 \
 #     --predict_batch_size=2 \
