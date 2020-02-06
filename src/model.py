@@ -1,9 +1,11 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_hub as hub
+import pandas as pd
 import numpy as np
 import datetime
 import tensorflow_text
+import pyodbc
 from sklearn.metrics.pairwise import cosine_similarity
 from tensorflow.keras.optimizers import Adam
 
@@ -169,7 +171,7 @@ class GoldenRetriever:
         self.optimizer.apply_gradients(zip(grads, self.var_finetune))
 
         return cost_value.numpy().mean()
-        
+
     def load_kb(self, kb_):
         """
         Load the knowledge base or bases
