@@ -34,7 +34,7 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 logger.info("Starting experiment")
-# experiment = Experiment()
+experiment = Experiment()
 
 
 # eg. 'albert' or 'bert' or 'USE'
@@ -137,7 +137,7 @@ def _flags_to_file(flag_objs, file_path):
 
 
 def _generate_neg_ans(df, train_dict):
-    
+    train_dict_with_neg = {}
     np.random.seed(FLAGS.random_seed)
 
     for kb, ans_pos_idxs in train_dict.items():
@@ -145,48 +145,48 @@ def _generate_neg_ans(df, train_dict):
         shuffled_ans_pos_idxs = ans_pos_idxs.copy()
         random.shuffle(shuffled_ans_pos_idxs)
         ans_neg_idxs = shuffled_ans_pos_idxs
-        
+
         for i in range(len(ans_neg_idxs)):
             v=0
+
             while ans_pos_idxs[i] == ans_neg_idxs[i]:
                 ans_neg_idxs[i] = shuffled_ans_pos_idxs[v]
                 v += 1
 
-
         keys.append(ans_pos_idxs)
         keys.append(np.array(ans_neg_idxs))
 
-        train_dict[kb] = keys 
+        train_dict_with_neg[kb] = keys 
     
-    return train_dict
+    return train_dict_with_neg
 
 
-def _create_dataset(data_type, batch_size, query=[], response=[], neg_response=[]):
-    if data_type == 'train':
-        def gen():
-            for ex in zip(query, response, neg_response):
-                yield(ex[0], ex[1], ex[2])
+# def _create_dataset(data_type, batch_size, query=[], response=[], neg_response=[]):
+#     if data_type == 'train':
+#         def gen():
+#             for ex in zip(query, response, neg_response):
+#                 yield(ex[0], ex[1], ex[2])
 
-        dataset = tf.data.Dataset.from_generator( 
-            gen, 
-            (tf.string, tf.string, tf.string), 
-            (tf.TensorShape([]), tf.TensorShape([]), tf.TensorShape([]))
-            )
+#         dataset = tf.data.Dataset.from_generator( 
+#             gen, 
+#             (tf.string, tf.string, tf.string), 
+#             (tf.TensorShape([]), tf.TensorShape([]), tf.TensorShape([]))
+#             )
 
-        return dataset.shuffle(128).batch(batch_size)
+#         return dataset.shuffle(128).batch(batch_size)
 
-    else:
-        def gen():
-            for ex in zip (query, response):
-                yield(ex[0], ex[1])
+#     else:
+#         def gen():
+#             for ex in zip (query, response):
+#                 yield(ex[0], ex[1])
         
-        dataset = tf.data.Dataset.from_generator( 
-            gen, 
-            (tf.string, tf.string), 
-            (tf.TensorShape([]), tf.TensorShape([]))
-            )
+#         dataset = tf.data.Dataset.from_generator( 
+#             gen, 
+#             (tf.string, tf.string), 
+#             (tf.TensorShape([]), tf.TensorShape([]))
+#             )
         
-        return dataset.shuffle(128).batch(batch_size)
+#         return dataset.shuffle(128).batch(batch_size)
 
 
 def _convert_bytes_to_string(byte):
@@ -215,18 +215,19 @@ def main(_):
     EVAL_SCORE_DIR = os.path.join(MAIN_DIR, 'results', FLAGS.model_name + '_eval_scores.xlsx' )
     EVAL_DICT_DIR = os.path.join(MAIN_DIR, 'results', FLAGS.model_name + '_eval_details.pickle')
 
-    logger.info(f"Models will be saved at: {MODEL_DIR}")
-    logger.info(f"Best model will be saved at: {MODEL_BEST_DIR}")
-    logger.info(f"Last trained model will be saved at {MODEL_LAST_DIR}")
-    logger.info(f"Saving Eval_Score at: {EVAL_SCORE_DIR}")
-    logger.info(f"Saving Eval_Dict at: {EVAL_DICT_DIR}")
+    logger.info(f'Models will be saved at: {MODEL_DIR}')
+    logger.info(f'Best model will be saved at: {MODEL_BEST_DIR}')
+    logger.info(f'Last trained model will be saved at {MODEL_LAST_DIR}')
+    logger.info(f'Saving Eval_Score at: {EVAL_SCORE_DIR}')
+    logger.info(f'Saving Eval_Dict at: {EVAL_DICT_DIR}')
 
     # Create training set based on chosen random seed
     logger.info("Generating training set")
 
     # Get df using kb_handler
     kbh = kb_handler()
-    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['nrf', 'PDPA'])
+    # kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['nrf', 'PDPA'])
+    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt')
 
     train_dict = dict()
     test_dict = dict()
@@ -237,24 +238,24 @@ def main(_):
         df_list.append(kb_df)
         idx = np.array(kb_df.index.tolist())
         train_idx, test_idx = train_test_split(idx, test_size=0.2, random_state=FLAGS.random_seed)
-        
+       
         train_dict[single_kb.name] = train_idx
         test_dict[single_kb.name] = test_idx
-    
+   
     df = pd.concat(df_list)
 
     train_dict_with_neg = _generate_neg_ans(df, train_dict)
     train_pos_idxs = np.concatenate([v[0] for k,v in train_dict_with_neg.items()], axis=0)
     train_neg_idxs = np.concatenate([v[1] for k,v in train_dict_with_neg.items()], axis=0)
 
-    train_query = df.loc[train_pos_idxs].query_string.tolist()
-    train_response = df.loc[train_pos_idxs].processed_string.tolist()
-    train_neg_response = df.loc[train_neg_idxs].processed_string.tolist()
+    train_query = df.iloc[train_pos_idxs].query_string.tolist()
+    train_response = df.iloc[train_pos_idxs].processed_string.tolist()
+    train_neg_response = df.iloc[train_neg_idxs].processed_string.tolist()
     
     train_dataset_loader = gen(FLAGS.train_batch_size, train_query, train_response, train_neg_response)
 
     # Create training tf dataset generator
-    logger.info("Creating dataset")
+    # logger.info("Creating dataset")
     # train_dataset = _create_dataset('train', FLAGS.train_batch_size, query=train_query, response=train_response, neg_response=train_neg_response)
 
     # Instantiate chosen model
@@ -268,7 +269,8 @@ def main(_):
     if FLAGS.model_name not in models:
         raise ValueError("Model not found: %s" % (FLAGS.model_name))
 
-    model = models[FLAGS.model_name]()
+    model = models[FLAGS.model_name](max_seq_length=FLAGS.max_seq_length)
+    logger.info(f'Training with max_seq_length: {model.max_seq_length}')
 
     # Set optimizer parameters
     model.opt_params = {'learning_rate': FLAGS.learning_rate,'beta_1': FLAGS.beta_1,'beta_2': FLAGS.beta_2,'epsilon': FLAGS.epsilon}
@@ -279,70 +281,84 @@ def main(_):
             # Required for contrastive loss
             # label = tf.placeholder(tf.int32, [None], name='label')
 
-            earlystopping_counter = 0
-            
-            for i in range(FLAGS.num_epochs):
-                epoch_start_time = datetime.datetime.now()
-                logger.info(f"Running Epoch #: {i}")
-
-                cost_mean_total = 0
+        earlystopping_counter = 0
         
-                batch_counter = 0
-                for q, r, neg_r in train_dataset_loader:
+        for i in range(FLAGS.num_epochs):
+            epoch_start_time = datetime.datetime.now()
+            logger.info(f'Running Epoch #: {i}')
 
-                    if batch_counter == 0:
-                        logger.info(f"Training batches of size: {len(r)}")
-        
-                    cost_mean_batch = model.finetune(question=q, answer=r, context=r, \
-                                                     neg_answer=neg_r, neg_answer_context=neg_r, \
-                                                     margin=FLAGS.margin, loss=FLAGS.loss_type)
+            cost_mean_total = 0
+            batch_counter = 0
+            epoch_start_time = datetime.datetime.now()
+
+            for q, r, neg_r in train_dataset_loader:
+                batch_start_time = datetime.datetime.now()
+
+                if batch_counter % 100 == 0:
+                    logger.info(f'Running batch #{batch_counter}')
     
-                    cost_mean_total += cost_mean_batch
-                    batch_counter += 1
+                cost_mean_batch = model.finetune(question=q, answer=r, context=r, \
+                                                 neg_answer=neg_r, neg_answer_context=neg_r, \
+                                                 margin=FLAGS.margin, loss=FLAGS.loss_type)
 
-                logger.info(f'Number of batches trained: {batch_counter}')
-                logger.info(f'Loss for Epoch #{i}: {cost_mean_total}')
+                cost_mean_total += cost_mean_batch
 
-                # Get model for first epoch
-                if i == 0:
-                    lowest_cost = cost_mean_total
-                    best_epoch = i
-                    earlystopping_counter = 0
-                    os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
-                    model.export(os.path.join(MODEL_BEST_DIR, str(i)))
-                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
-                                  os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
+                batch_end_time = datetime.datetime.now()
 
-                # Model checkpoint
-                if cost_mean_total < lowest_cost:
-                    best_epoch = i
-                    lowest_cost = cost_mean_total
-                    os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
-                    model.export(os.path.join(MODEL_BEST_DIR, str(i)))
-                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
-                                  os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
-                    logger.info(f"Saved best model with cost of {lowest_cost} for Epoch #{i}")
-                else:
-                    # Activate early stopping counter
-                    earlystopping_counter += 1
+                if batch_counter == 0 and i == 0:
+                    num_batches = len(train_query) // len(q)
+                    logger.info(f'Training batches of size: {len(q)}')
+                    logger.info(f'Number of batches per epoch: {num_batches}')
+                    logger.info(f'Time taken for first batch: {batch_end_time - batch_start_time}')
 
-                # experiment.log_metrics(steps=i, loss=cost_mean_total)
+                batch_counter += 1
 
-                # Early stopping
-                if earlystopping_counter == FLAGS.early_stopping_steps:
-                    logger.info("Early stop executed")
-                    model.export(MODEL_LAST_DIR)
-                    _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
-                                  os.path.join(MODEL_LAST_DIR, 'train.cfg'))
-                    break
-                
-                epoch_end_time = datetime.datetime.now()
-                logger.info(f"Time Taken for Epoch #{i}: {epoch_end_time - epoch_start_time}")
-                logger.info(f"Average time Taken for each batch: {(epoch_end_time - epoch_start_time)/batch_counter}")
+            logger.info(f'Number of batches trained: {batch_counter}')
+            logger.info(f'Loss for Epoch #{i}: {cost_mean_total}')
+
+            epoch_end_time = datetime.datetime.now()
+            logger.info(f'Time taken for Epoch #{i}: {epoch_end_time - epoch_start_time}')
+
+            # Save model for first epoch
+            if i == 0:
+                lowest_cost = cost_mean_total
+                best_epoch = i
+                earlystopping_counter = 0
+                os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
+                model.export(os.path.join(MODEL_BEST_DIR, str(i)))
+                _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                                os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
+
+            # Model checkpoint
+            if cost_mean_total < lowest_cost:
+                best_epoch = i
+                lowest_cost = cost_mean_total
+                os.makedirs(os.path.join(MODEL_BEST_DIR, str(i)))
+                model.export(os.path.join(MODEL_BEST_DIR, str(i)))
+                _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                               os.path.join(MODEL_BEST_DIR, str(i), 'train.cfg'))
+                logger.info(f'Saved best model with cost of {lowest_cost} for Epoch #{i}')
+            else:
+                # Activate early stopping counter
+                earlystopping_counter += 1
+
+            experiment.log_metrics(steps=i, loss=cost_mean_total)
+
+            # Early stopping
+            if earlystopping_counter == FLAGS.early_stopping_steps:
+                logger.info("Early stop executed")
+                model.export(MODEL_LAST_DIR)
+                _flags_to_file(FLAGS.get_key_flags_for_module(sys.argv[0]),
+                                os.path.join(MODEL_LAST_DIR, 'train.cfg'))
+                break
+            
+            epoch_end_time = datetime.datetime.now()
+            logger.info(f'Time Taken for Epoch #{i}: {epoch_end_time - epoch_start_time}')
+            logger.info(f'Average time Taken for each batch: {(epoch_end_time - epoch_start_time)/batch_counter}')
 
     # Restore best model. User will have to define path to model if only eval is done.
+    logger.info("Restoring model")
     if FLAGS.task_type == 'train_eval':
-        logger.info("Restoring model")
         model.restore(os.path.join(MODEL_BEST_DIR, str(best_epoch)))
     else:
         model.restore(FLAGS.eval_model_dir)
@@ -355,7 +371,7 @@ def main(_):
 
     for kb_name in df.kb_name.unique():
 
-        logger.info(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
+        logger.info(f'\n {datetime.datetime.now()} - Evaluating on {kb_name} \n')
 
         # dict stores eval metrics and relevance ranks
         eval_kb_dict = {}
@@ -428,14 +444,14 @@ def main(_):
         pickle.dump(eval_dict, handle)
 
     eval_end_time = datetime.datetime.now()
-    logger.info(f"Time Taken for Eval : {eval_end_time - eval_start_time}")
+    logger.info(f'Time Taken for Eval : {eval_end_time - eval_start_time}')
 
 if __name__ == "__main__":
     app.run(main)
 
 
 # python /polyaxon-data/goldenretriever/src/finetune_eval.py \
-#     --model_name='USE' \
+#     --model_name='albert' \
 #     --random_seed=42 \
 #     --train_batch_size=2 \
 #     --predict_batch_size=2 \
