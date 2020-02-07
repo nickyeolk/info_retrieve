@@ -26,11 +26,13 @@ class GoldenRetriever:
     
     """
      
-    def __init__(self):
+    def __init__(self, max_seq_length=512):
         """
         initialize the model. load google USE embedding
    
         """
+        # Not used for USE
+        self.max_seq_length = max_seq_length
 
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
@@ -682,15 +684,10 @@ class GoldenRetriever_ALBERT:
 
     def restore(self, savepath='./model/albert/gr_albert.hdf5'):
         """
-        Load saved model from savepath
+        Load weights from savepath
         
-        hub.KerasLayer is unrecognized by tf.keras' save and load_model methods.
-        The trick is to feed a custom_objects dict object
-        This solution given by qo-o-op in this link:
-        https://github.com/tensorflow/tensorflow/issues/26835
-
         Args:
-            savepath: (str) dir path of the 
+            savepath: (str) dir path of the weights
         """
         
         self.albert_model.load_weights(savepath)
