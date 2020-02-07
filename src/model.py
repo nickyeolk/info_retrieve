@@ -1,6 +1,7 @@
 import tensorflow as tf
 # import tensorflow_addons as tfa
 import tensorflow_hub as hub
+import pandas as pd
 import numpy as np
 import datetime
 import tensorflow_text
@@ -154,9 +155,8 @@ class GoldenRetriever:
         self.optimizer.apply_gradients(zip(grads, self.var_finetune))
 
         return cost_value.numpy().mean()
-        
-    def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
-                raw_text=None, is_faq=False, kb_name='default_kb'):
+
+    def load_kb(self, kb_):
         """
         Give either path to .txt document or list of clauses.
         For text document, each clause is separated by 2 newlines ('\\n\\n')
