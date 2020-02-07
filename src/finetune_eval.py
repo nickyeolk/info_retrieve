@@ -138,7 +138,7 @@ def _flags_to_file(flag_objs, file_path):
 
 def _generate_neg_ans(df, train_dict):
     train_dict_with_neg = {}
-    np.random.seed(FLAGS.random_seed)
+    random.seed(FLAGS.random_seed)
 
     for kb, ans_pos_idxs in train_dict.items():
         keys = []
@@ -161,59 +161,36 @@ def _generate_neg_ans(df, train_dict):
     return train_dict_with_neg
 
 
-# def _create_dataset(data_type, batch_size, query=[], response=[], neg_response=[]):
-#     if data_type == 'train':
-#         def gen():
-#             for ex in zip(query, response, neg_response):
-#                 yield(ex[0], ex[1], ex[2])
-
-#         dataset = tf.data.Dataset.from_generator( 
-#             gen, 
-#             (tf.string, tf.string, tf.string), 
-#             (tf.TensorShape([]), tf.TensorShape([]), tf.TensorShape([]))
-#             )
-
-#         return dataset.shuffle(128).batch(batch_size)
-
-#     else:
-#         def gen():
-#             for ex in zip (query, response):
-#                 yield(ex[0], ex[1])
-        
-#         dataset = tf.data.Dataset.from_generator( 
-#             gen, 
-#             (tf.string, tf.string), 
-#             (tf.TensorShape([]), tf.TensorShape([]))
-#             )
-        
-#         return dataset.shuffle(128).batch(batch_size)
-
-
 def _convert_bytes_to_string(byte):
     return str(byte, 'utf-8')
 
 
-def gen(batch_size, query, response, neg_response):
+def gen(batch_size, query, response, neg_response, shuffle_data=False):
+    random.seed(FLAGS.random_seed)
+    zip_list = list(zip(query,response,neg_response))
+
     num_samples = len(query)
-    
-    for offset in range(0, num_samples, batch_size):
-        q_batch = query[offset:offset+batch_size]
-        r_batch = response[offset:offset+batch_size]
-        neg_r_batch = response[offset:offset+batch_size]
-    
-        yield(q_batch, r_batch, neg_r_batch)
+    while True:
+        if shuffle_data:
+            random.shuffle(zip_list)
+
+        for offset in range(0, num_samples, batch_size):
+            q_batch = [x[0] for x in zip_list[offset:offset+batch_size]]
+            r_batch = [x[1] for x in zip_list[offset:offset+batch_size]]
+            neg_r_batch = [x[2] for x in zip_list[offset:offset+batch_size]]
+        
+            yield(q_batch, r_batch, neg_r_batch)
 
 
 def main(_):
-    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
     # Define file/directory paths
-    MAIN_DIR = '/polyaxon-data/goldenretriever'
-    MODEL_DIR = os.path.join(MAIN_DIR, 'model_test', FLAGS.model_name)
-    MODEL_BEST_DIR = os.path.join(MAIN_DIR, 'model_test', FLAGS.model_name, 'best')
-    MODEL_LAST_DIR = os.path.join(MAIN_DIR, 'model_test', FLAGS.model_name, 'last')
-    EVAL_SCORE_DIR = os.path.join(MAIN_DIR, 'results', FLAGS.model_name + '_eval_scores.xlsx' )
-    EVAL_DICT_DIR = os.path.join(MAIN_DIR, 'results', FLAGS.model_name + '_eval_details.pickle')
+    MAIN_DIR = experiment.get_tf_config()['model_dir']
+    MODEL_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name)
+    MODEL_BEST_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name, 'best')
+    MODEL_LAST_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name, 'last')
+    EVAL_SCORE_DIR = os.path.join(MAIN_DIR, 'results_nrf_pdpa_ins', FLAGS.model_name + '_eval_scores.xlsx' )
+    EVAL_DICT_DIR = os.path.join(MAIN_DIR, 'results_nrf_pdpa_ins', FLAGS.model_name + '_eval_details.pickle')
 
     logger.info(f'Models will be saved at: {MODEL_DIR}')
     logger.info(f'Best model will be saved at: {MODEL_BEST_DIR}')
@@ -226,8 +203,11 @@ def main(_):
 
     # Get df using kb_handler
     kbh = kb_handler()
-    # kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['nrf', 'PDPA'])
-    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt')
+    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['PDPA', 'nrf', 'life-insurance', 'renters-insurance',
+                                                                                                'auto-insurance', 'annuities', 'home-insurance',
+                                                                                                'retirement-plans', 'disability-insurance', 'health-insurance',
+                                                                                                'medicare-insurance', 'long-term-care-insurance',
+                                                                                                'critical-illness-insurance', 'other-insurance'])
 
     train_dict = dict()
     test_dict = dict()
@@ -252,11 +232,7 @@ def main(_):
     train_response = df.iloc[train_pos_idxs].processed_string.tolist()
     train_neg_response = df.iloc[train_neg_idxs].processed_string.tolist()
     
-    train_dataset_loader = gen(FLAGS.train_batch_size, train_query, train_response, train_neg_response)
-
-    # Create training tf dataset generator
-    # logger.info("Creating dataset")
-    # train_dataset = _create_dataset('train', FLAGS.train_batch_size, query=train_query, response=train_response, neg_response=train_neg_response)
+    train_dataset_loader = gen(FLAGS.train_batch_size, train_query, train_response, train_neg_response, shuffle_data=True)
 
     # Instantiate chosen model
     logger.info(f"Instantiating model: {FLAGS.model_name}")
@@ -311,6 +287,9 @@ def main(_):
                     logger.info(f'Number of batches per epoch: {num_batches}')
                     logger.info(f'Time taken for first batch: {batch_end_time - batch_start_time}')
 
+                if batch_counter == num_batches:
+                    break
+                
                 batch_counter += 1
 
             logger.info(f'Number of batches trained: {batch_counter}')
