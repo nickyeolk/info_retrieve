@@ -297,12 +297,6 @@ class kb_handler():
         
         kb_names = list(SQL_Query['kb_name'].unique()) if len(kb_names) == 0 else kb_names
         
-        # These knowledge bases are too large, will exclude for evaluation stage for now
-        # kb_excluded = ['life-insurance', 'auto-insurance', 'medicare-insurance']
-        
-        # for name in kb_excluded:
-        #     kb_names.remove(name)
-        
         kbs = []
         for kb_name in kb_names:
             
