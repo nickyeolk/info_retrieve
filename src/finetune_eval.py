@@ -189,14 +189,19 @@ def main(_):
     MODEL_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name)
     MODEL_BEST_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name, 'best')
     MODEL_LAST_DIR = os.path.join(MAIN_DIR, 'model_nrf_pdpa_ins', FLAGS.model_name, 'last')
-    EVAL_SCORE_DIR = os.path.join(MAIN_DIR, 'results_nrf_pdpa_ins', FLAGS.model_name + '_eval_scores.xlsx' )
-    EVAL_DICT_DIR = os.path.join(MAIN_DIR, 'results_nrf_pdpa_ins', FLAGS.model_name + '_eval_details.pickle')
+    EVAL_DIR = os.path.join(MAIN_DIR, 'results_nrf_pdpa_ins', FLAGS.model_name)
+
+    os.makedirs(MODEL_LAST_DIR)
+    os.makedirs(EVAL_DIR)
+
+    EVAL_SCORE_PATH = os.path.join(EVAL_DIR, '_eval_scores.xlsx')
+    EVAL_DICT_PATH = os.path.join(EVAL_DIR, '_eval_details.pickle')
 
     logger.info(f'Models will be saved at: {MODEL_DIR}')
     logger.info(f'Best model will be saved at: {MODEL_BEST_DIR}')
     logger.info(f'Last trained model will be saved at {MODEL_LAST_DIR}')
-    logger.info(f'Saving Eval_Score at: {EVAL_SCORE_DIR}')
-    logger.info(f'Saving Eval_Dict at: {EVAL_DICT_DIR}')
+    logger.info(f'Saving Eval Scores at: {EVAL_SCORE_PATH}')
+    logger.info(f'Saving Eval Dicts at: {EVAL_DICT_PATH}')
 
     # Create training set based on chosen random seed
     logger.info("Generating training set")
@@ -399,6 +404,7 @@ def main(_):
         eval_kb_dict['ranks_to_eval'] = ranks_to_eval
         eval_dict[kb_name] = eval_kb_dict.copy()
 
+
     # overall_eval is a dataframe that 
     # tracks performance across the different knowledge bases
     # but individually
@@ -418,8 +424,8 @@ def main(_):
     print(overall_eval)
 
     # save the scores and details for later evaluation. WARNING: User will need to create the necessary directories to save df
-    overall_eval.to_excel(EVAL_SCORE_DIR)
-    with open(EVAL_DICT_DIR, 'wb') as handle:
+    overall_eval.to_excel(EVAL_SCORE_PATH)
+    with open(EVAL_DICT_PATH, 'wb') as handle:
         pickle.dump(eval_dict, handle)
 
     eval_end_time = datetime.datetime.now()
@@ -429,7 +435,7 @@ if __name__ == "__main__":
     app.run(main)
 
 
-# python /polyaxon-data/goldenretriever/src/finetune_eval.py \
+# python /polyaxon-data/goldenretriever/src/finetune_eval_nrf_test.py \
 #     --model_name='albert' \
 #     --random_seed=42 \
 #     --train_batch_size=2 \
