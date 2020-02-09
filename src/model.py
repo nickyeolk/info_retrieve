@@ -69,13 +69,18 @@ class GoldenRetriever:
 
         """
         if type=='query':
-            return self.question_encoder(tf.constant([text]))['outputs']
+            encoded_queries = [self.question_encoder(tf.constant([t]))['outputs'] for t in text]
+            encoded_queries_tensor = tf.concat(encoded_queries, axis=0)
+            return encoded_queries_tensor
             # return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
         elif type=='response':
             if not context:
                 context = text
-            return self.response_encoder(input=tf.constant(text),
-                                         context=tf.constant(context))['outputs']
+            
+            encoded_responses = [self.response_encoder(input=tf.constant(t),
+                                 context=tf.constant(c))['outputs'] for t, c in zip(text, context)]
+            encoded_responses_tensor = tf.concat(encoded_responses, axis=0)
+            return encoded_responses_tensor
         else: print('Type of prediction not defined')
         
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
@@ -526,7 +531,7 @@ class GoldenRetriever_ALBERT:
         print('model initiated!')
 
         
-    def predict(self, text, type='response'):
+    def _predict_one_str(self, text, type='response'):
         """
         Return the tensor representing embedding of input text.
         Type can be 'query' or 'response' 
@@ -541,9 +546,15 @@ class GoldenRetriever_ALBERT:
             pooled_embedding: (tf.tensor) contains the 768 dim encoding of the input text
         """
         
-        preprocessed_inputs = preprocess_str(text, self.max_seq_length, self.tokenizer)
+        # preprocessed_inputs = np.array(preprocess_str(text, self.max_seq_length, self.tokenizer))
+        preprocessed_inputs = self.tokenizer.encode_plus(text, max_length=self.max_seq_length, pad_to_max_length=True, add_special_tokens=True, return_tensors="tf")
         pooled_embedding = self.albert_layer(preprocessed_inputs)[1]
         return pooled_embedding
+
+    def predict(self, text, type='response'):
+        encoded_strings = [self._predict_one_str(t) for t in text]
+        encoded_responses_tensor = tf.concat(encoded_strings, axis=0)
+        return encoded_responses_tensor
 
     
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
