@@ -553,8 +553,8 @@ class GoldenRetriever_ALBERT:
 
     def predict(self, text, type='response'):
         encoded_strings = [self._predict_one_str(t) for t in text]
-        encoded_responses_tensor = tf.concat(encoded_strings, axis=0)
-        return encoded_responses_tensor
+        encoded_tensor = tf.concat(encoded_strings, axis=0)
+        return encoded_tensor
 
     
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
