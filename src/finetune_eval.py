@@ -200,19 +200,15 @@ def main(_):
     logger.info(f'Models will be saved at: {MODEL_DIR}')
     logger.info(f'Best model will be saved at: {MODEL_BEST_DIR}')
     logger.info(f'Last trained model will be saved at {MODEL_LAST_DIR}')
-    logger.info(f'Saving Eval Scores at: {EVAL_SCORE_PATH}')
-    logger.info(f'Saving Eval Dicts at: {EVAL_DICT_PATH}')
+    logger.info(f'Saving Eval_Score at: {EVAL_SCORE_PATH}')
+    logger.info(f'Saving Eval_Dict at: {EVAL_DICT_PATH}')
 
     # Create training set based on chosen random seed
     logger.info("Generating training set")
 
     # Get df using kb_handler
     kbh = kb_handler()
-    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt', kb_names=['PDPA', 'nrf', 'life-insurance', 'renters-insurance',
-                                                                                                'auto-insurance', 'annuities', 'home-insurance',
-                                                                                                'retirement-plans', 'disability-insurance', 'health-insurance',
-                                                                                                'medicare-insurance', 'long-term-care-insurance',
-                                                                                                'critical-illness-insurance', 'other-insurance'])
+    kbs = kbh.load_sql_kb(cnxn_path='/polyaxon-data/goldenretriever/db_cnxn_str.txt')
 
     train_dict = dict()
     test_dict = dict()
@@ -356,10 +352,8 @@ def main(_):
     for kb_name in df.kb_name.unique():
 
         logger.info(f'\n {datetime.datetime.now()} - Evaluating on {kb_name} \n')
-
         # dict stores eval metrics and relevance ranks
-        eval_kb_dict = {}
-
+        eval_kb_dict = {}  
         # test-mask is a int array
         # that chooses specific test questions
         # e.g.  test_mask [True, True, False]
@@ -374,7 +368,6 @@ def main(_):
         query_list = kb_df.query_string.tolist()
         response_list_w_duplicates = kb_df.processed_string.tolist()
         response_list = kb_df.processed_string.drop_duplicates().tolist() 
-
         # this index list is important
         # it lists the index of the correct answer for every question
         # e.g. for 20 questions mapped to 5 repeated answers
