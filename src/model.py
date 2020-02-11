@@ -46,6 +46,7 @@ class GoldenRetriever:
         self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/2')
         self.init_signatures()
 
+
     def init_signatures(self):
         # re-initialize the references to the model signatures
         self.question_encoder = self.embed.signatures['question_encoder']
@@ -57,7 +58,8 @@ class GoldenRetriever:
         self.optimizer = tf.keras.optimizers.Adam(**self.opt_params)
         self.cost_history = []
         self.var_finetune=[x for x in self.embed.variables for vv in self.v if vv in x.name] #get the weights we want to finetune.
-               
+
+
     def predict(self, text, context=None, type='response'):
         """
         Return the tensor representing embedding of input text.
@@ -83,7 +85,8 @@ class GoldenRetriever:
             encoded_responses_tensor = tf.concat(encoded_responses, axis=0)
             return encoded_responses_tensor
         else: print('Type of prediction not defined')
-        
+
+
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
         """
         Make a query against the stored vectorized knowledge. 
@@ -161,6 +164,7 @@ class GoldenRetriever:
 
         return cost_value.numpy().mean()
 
+
     def load_kb(self, kb_):
         """
         Give either path to .txt document or list of clauses.
@@ -188,7 +192,8 @@ class GoldenRetriever:
         else: raise NameError('invalid kb input!')
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base lock and loaded!')
-        
+
+
     def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
                     query_col='question', answer_str_col='answer', cutoff=None):
 
@@ -200,7 +205,8 @@ class GoldenRetriever:
                             query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base (csv) lock and loaded!')
-        
+
+
     def export(self, savepath='fine_tuned'):
         '''
         Path should include partial filename.
@@ -212,6 +218,7 @@ class GoldenRetriever:
                                                                 'response_encoder':self.embed.signatures['response_encoder'],
                                                                 'question_encoder':self.embed.signatures['question_encoder']  
                                                                 })
+
 
     def restore(self, savepath):
         """
@@ -310,9 +317,20 @@ class GoldenRetriever_BERT:
         Return:
             pooled_embedding: (tf.tensor) contains the 768 dim encoding of the input text
         """
-        preprocessed_inputs = preprocess_str(text, self.max_seq_length, self.tokenizer)
-        pooled_embedding, _ = self.bert_model.get_layer( self.bert_layer_name )(preprocessed_inputs)
-        return pooled_embedding
+
+        if type == 'query':
+            question_id_mask_seg = preprocess_str(text, self.max_seq_length, self.tokenizer)
+            question_embeddings, q_sequence_output = self.bert_model.get_layer( self.bert_layer_name )(question_id_mask_seg)
+            return question_embeddings
+
+        elif type == 'response':
+            response_id_mask_seg = preprocess_str(text, self.max_seq_length, self.tokenizer)    
+            response_embeddings = self.bert_model([tf.constant(response_id_mask_seg[0]),
+                                            tf.constant(response_id_mask_seg[1]),
+                                            tf.constant(response_id_mask_seg[2]),
+                                        ])
+            return response_embeddings
+
         
     def make_query(self, querystring, top_k=5, index=False, predict_type='query', kb_name='default_kb'):
         """Make a query against the stored vectorized knowledge. 
@@ -399,7 +417,8 @@ class GoldenRetriever_BERT:
         self.optimizer.apply_gradients(zip(self.grads, self.var_finetune))
 
         return cost_value.numpy().mean()
-        
+
+
     def load_kb(self, path_to_kb=None, text_list=None, question_list=None, 
                 raw_text=None, is_faq=False, kb_name='default_kb'):
         r"""Give either path to .txt document or list of clauses.
@@ -419,14 +438,16 @@ class GoldenRetriever_BERT:
         else: raise NameError('invalid kb input!')
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base lock and loaded!')
-        
+
+
     def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
                     query_col='question', answer_str_col='answer', cutoff=None):
         self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
                             query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
         self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
         print('knowledge base (csv) lock and loaded!')
-        
+
+
     def export(self, savepath='gr_bert.hdf5'):
         '''
         Save the BERT model into a directory
@@ -443,6 +464,7 @@ class GoldenRetriever_BERT:
         self.bert_model.do_lower_case = self.do_lower_case
 
         self.bert_model.save(savepath, include_optimizer=False, save_format="h5")
+
 
     def restore(self, savepath='gr_bert.hdf5'):
         """
@@ -546,13 +568,23 @@ class GoldenRetriever_ALBERT:
             pooled_embedding: (tf.tensor) contains the 768 dim encoding of the input text
         """
         
-        # preprocessed_inputs = np.array(preprocess_str(text, self.max_seq_length, self.tokenizer))
-        preprocessed_inputs = self.tokenizer.encode_plus(text, max_length=self.max_seq_length, pad_to_max_length=True, add_special_tokens=True, return_tensors="tf")
-        pooled_embedding = self.albert_layer(preprocessed_inputs)[1]
-        return pooled_embedding
+        if type == 'query'
+            question_id_mask_seg = preprocess_str(question, self.max_seq_length, self.tokenizer)
+            question_embedding = self.albert_layer(question_id_mask_seg)[1]
+            return question_embedding
+        
+        if type == 'response':
+            response_id_mask_seg = preprocess_str(answer, self.max_seq_length, self.tokenizer)
+            response_embedding = self.albert_model([tf.constant(response_id_mask_seg[0]),
+                                                     tf.constant(response_id_mask_seg[1]),
+                                                     tf.constant(response_id_mask_seg[2]),
+                                                ])
+            return response_embedding
+
 
     def predict(self, text, type='response'):
-        encoded_strings = [self._predict_one_str(t) for t in text]
+        print('new')
+        encoded_strings = [self._predict_one_str(t, type=type) for t in text]
         encoded_tensor = tf.concat(encoded_strings, axis=0)
         return encoded_tensor
 
