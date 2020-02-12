@@ -568,16 +568,19 @@ class GoldenRetriever_ALBERT:
             pooled_embedding: (tf.tensor) contains the 768 dim encoding of the input text
         """
         
-        if type == 'query'
-            question_id_mask_seg = preprocess_str(question, self.max_seq_length, self.tokenizer)
-            question_embedding = self.albert_layer(question_id_mask_seg)[1]
+        if type == 'query':
+            question_id_mask_seg = preprocess_str(text, self.max_seq_length, self.tokenizer)
+            question_embedding = self.albert_layer([tf.constant(question_id_mask_seg[0]),
+                                                    tf.constant(question_id_mask_seg[1]),
+                                                    tf.constant(question_id_mask_seg[2]),
+                                                ])[1]
             return question_embedding
         
         if type == 'response':
-            response_id_mask_seg = preprocess_str(answer, self.max_seq_length, self.tokenizer)
+            response_id_mask_seg = preprocess_str(text, self.max_seq_length, self.tokenizer)
             response_embedding = self.albert_model([tf.constant(response_id_mask_seg[0]),
-                                                     tf.constant(response_id_mask_seg[1]),
-                                                     tf.constant(response_id_mask_seg[2]),
+                                                    tf.constant(response_id_mask_seg[1]),
+                                                    tf.constant(response_id_mask_seg[2]),
                                                 ])
             return response_embedding
 
