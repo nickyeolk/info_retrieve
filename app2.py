@@ -21,11 +21,14 @@ def init():
     pdpa = kbh.parse_csv('data/pdpa.csv', 
                          answer_col='answer', query_col='question', context_col='meta', 
                          kb_name='pdpa')
+    ncov = kbh.parse_csv('data/ncov.csv',
+                        answer_col='answer', query_col='question', kb_name='ncov')
 
     # load kbs
     retriever.load_kb(resale_tnc)
     retriever.load_kb(aiap)
     retriever.load_kb(pdpa)
+    retriever.load_kb(ncov)
 
     # load SQL db
     # kbs = kbh.load_sql_kb(cnxn_path = "db_cnxn_str.txt", kb_names=['PDPA','nrf'])
@@ -41,17 +44,19 @@ st.markdown('Visit our [community](https://makerspace.aisingapore.org/community/
 kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 'resale_tnc':"How much is the option fee?",
                 'aiap':"Do I need to pay for the program?",
+                'ncov':'what is coronavirus?',
                 # 'nrf':"Can I vire from EOM into travel?",
                 'raw_kb':"What do you not love?"}
 
 def format_func(kb_name):
-    namedicts={'pdpa':'PDPA',
+    namedicts={'ncov':'2019-ncov',
+                'pdpa':'PDPA',
                 'resale_tnc':'HDB Resale',
                 'aiap':'AIAP',
                 # 'nrf':'NRF',
                 'raw_kb':'Paste Raw Text'}
     return namedicts[kb_name]
-kb = st.selectbox('Select Knowledge Base', options=['pdpa', 'resale_tnc', 'aiap', 'raw_kb'],
+kb = st.selectbox('Select Knowledge Base', options=['ncov', 'pdpa', 'resale_tnc', 'aiap', 'raw_kb'],
                     format_func=format_func)
 if kb=='raw_kb':
     kb_raw = st.text_area(label='Paste raw text (terms separated by empty line)', 
