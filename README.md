@@ -84,3 +84,6 @@ contain a correct answer.
 
 - <sup><a name="1">1</a></sup> Google Universal Sentence Encoder
 - <sup><a name="2">2</a></sup> Google Universal Sentence Encoder for Question-Answer Retrieval
+
+## Acknowledgements
+This project  is supported by the National Research Foundation, Singapore under its AI Singapore Programme (AISG-RP-2019-050). Any opinions, findings and conclusions or recommendations expressed in this material are those of the author(s) and do not reflect the views of National Research Foundation, Singapore.
