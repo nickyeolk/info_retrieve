@@ -269,7 +269,7 @@ class kb_handler():
         df = pd.read_csv(path)
         kb = self.parse_df(kb_name, df, answer_col, query_col, context_col)
         return kb
-    
+
     def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
         """
         Load the knowledge bases from SQL.
