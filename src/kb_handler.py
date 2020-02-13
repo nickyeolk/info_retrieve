@@ -323,7 +323,7 @@ class kb_handler():
 
             # load name, responses, queries, mapping into kb object
             indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('') # fillna: not all responses have a context_string
-            indexed_queries = kb_df.loc[:,['query_id', 'query_string']]
+            indexed_queries = kb_df.loc[:,['query_id', 'query_string']].drop_duplicates(subset=['query_id'])
             mappings = generate_mappings(kb_df.processed_string, kb_df.query_string)
             
             kb_ = kb(kb_name, indexed_responses, indexed_queries, mappings)
