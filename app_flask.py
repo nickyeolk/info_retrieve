@@ -296,7 +296,7 @@ def upload_knowledge_base_to_sql():
     except:
         print(f"ERROR: Tried to retrieve user id from {HASHKEY}")
         print( permissions.loc[HASHKEY] )
-        raise
+        raise InvalidUsage(message="Hashkey not recognized")
 
 
 
@@ -414,20 +414,20 @@ def remove_knowledge_base_from_sql():
     kb_name = request_dict["kb_name"]
 
     del_kb = pds.read_sql('''SELECT dbo.kb_raw.kb_name, dbo.kb_clauses.processed_string, dbo.query_db.query_string, dbo.kb_clauses.created_at, \
-                        dbo.kb_raw.directory_id, dbo.kb_clauses.raw_id, dbo.query_labels.clause_id, dbo.query_labels.query_id, dbo.query_labels.id \
-                        FROM dbo.users \
-                        LEFT JOIN dbo.kb_directory ON dbo.users.id = dbo.kb_directory.user_id \
-                        LEFT JOIN dbo.kb_raw ON dbo.kb_directory.id = dbo.kb_raw.directory_id \
-                        LEFT JOIN dbo.kb_clauses ON dbo.kb_raw.id = dbo.kb_clauses.raw_id \
-                        LEFT JOIN dbo.query_labels ON dbo.kb_clauses.id = dbo.query_labels.clause_id \
-                        LEFT JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
-                        WHERE dbo.kb_raw.kb_name = (?) \
-                        AND dbo.users.hashkey = (?) \
-                        AND dbo.kb_raw.type = 'user_uploaded'
-                         ''',
-                      conn,
-                      params = [kb_name, HASHKEY],
-                      )
+                            dbo.kb_raw.directory_id, dbo.kb_clauses.raw_id, dbo.query_labels.clause_id, dbo.query_labels.query_id, dbo.query_labels.id \
+                            FROM dbo.users \
+                            LEFT JOIN dbo.kb_directory ON dbo.users.id = dbo.kb_directory.user_id \
+                            LEFT JOIN dbo.kb_raw ON dbo.kb_directory.id = dbo.kb_raw.directory_id \
+                            LEFT JOIN dbo.kb_clauses ON dbo.kb_raw.id = dbo.kb_clauses.raw_id \
+                            LEFT JOIN dbo.query_labels ON dbo.kb_clauses.id = dbo.query_labels.clause_id \
+                            LEFT JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
+                            WHERE dbo.kb_raw.kb_name = (?) \
+                            AND dbo.users.hashkey = (?) \
+                            AND dbo.kb_raw.type = 'user_uploaded'
+                            ''',
+                        conn,
+                        params = [kb_name, HASHKEY],
+                        )
     del_kb.rename({'id':'query_labels_id'}, axis=1, inplace=True)   
 
     if len(del_kb)==0:
