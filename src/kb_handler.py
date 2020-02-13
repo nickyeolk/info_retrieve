@@ -150,7 +150,7 @@ class kb_handler():
         ------
             kb object
         """
-        df = df.assign(context_string_ = '') if context_col == 'context_string' else df 
+        df = df.assign(context_string = '') if context_col == 'context_string' else df 
         df = df.rename(columns = {
                                    answer_col: 'raw_string', 
                                    context_col: 'context_string',
