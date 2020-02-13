@@ -16,7 +16,8 @@ RUN pip install flask \
 && apt-get update \
 && ACCEPT_EULA=Y apt-get -y install msodbcsql17 \
 && apt-get -y install unixodbc unixodbc-dev \
-&& pip install pyodbc
+&& pip install pyodbc \
+&& pip install waitress
 # && apt-get -y install wget \
 # && wget https://finetunedweights.blob.core.windows.net/finetuned01/google_use_nrf_pdpa_tuned.tar.gz \
 # && tar -zxvf google_use_nrf_pdpa_tuned.tar.gz
