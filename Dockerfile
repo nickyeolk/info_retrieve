@@ -6,10 +6,11 @@ RUN pip install flask \
 && pip install pandas \
 && pip install scikit-learn \
 && pip install tensorflow==2.0.0 \
-&& pip install tensorflow-gpu==2.0.0 \
+# && pip install tensorflow-gpu==2.0.0 \
 && pip install tensorflow-estimator==2.0.1 \
 && pip install tensorflow-text==2.0.1  \
-&& pip install tensorflow-addons==0.6.0 \
+# && pip install tensorflow-addons==0.6.0 \
+&& pip install transformers \
 && pip install streamlit \
 && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 && curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list \

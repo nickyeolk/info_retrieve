@@ -36,7 +36,7 @@ def generate_mappings(responses, queries):
     for convenient use in downstream scripts
 
     Args:
-    ----
+    ---
         responses: (pd.Series) contains query strings, may be non unique
         queries: (pd.Series) contains query strings, may be non unique
 
@@ -117,28 +117,9 @@ class kb:
                         processed_string_series.iloc[q_r_idx[1]].reset_index(drop=True)], 
                         axis=1)
         df = df.assign(kb_name = self.name)
-        
+
         return df
 
-    def json(self, hashkey=None):
-        """
-        Create json dict to use with flask endpoint
-        """
-        json_dict = {}
-
-        if hashkey is not None:
-            json_dict['hashkey'] = hashkey
-        json_dict['kb_name'] = self.name
-
-        json_dict['kb'] = {}
-        json_dict['kb']['responses'] = self.responses.raw_string.tolist()
-        json_dict['kb']['contexts'] = self.responses.context_string.tolist()
-
-        if (len(self.queries) > 0) & (len(self.mapping) > 0):
-            json_dict['kb']['queries'] = self.queries.query_string.tolist()
-            json_dict['kb']['mapping'] = self.mapping
-
-        return json_dict
 
 
 class kb_handler():
@@ -288,7 +269,7 @@ class kb_handler():
         df = pd.read_csv(path)
         kb = self.parse_df(kb_name, df, answer_col, query_col, context_col)
         return kb
-    
+
     def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
         """
         Load the knowledge bases from SQL.
@@ -323,7 +304,7 @@ class kb_handler():
 
             # load name, responses, queries, mapping into kb object
             indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('') # fillna: not all responses have a context_string
-            indexed_queries = kb_df.loc[:,['query_id', 'query_string']].drop_duplicates(subset=['query_id'])
+            indexed_queries = kb_df.loc[:,['query_id', 'query_string']].drop_duplicates(subset=['query_id']).fillna('')
             mappings = generate_mappings(kb_df.processed_string, kb_df.query_string)
             
             kb_ = kb(kb_name, indexed_responses, indexed_queries, mappings)
@@ -331,5 +312,3 @@ class kb_handler():
             kbs.append(kb_)
         
         return kbs
-
-
