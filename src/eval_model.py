@@ -76,102 +76,102 @@ def get_eval_dict(ranks):
     return eval_dict
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--modelname", default='GoldenRetriever', help="name of model class in GR src")
-parser.add_argument("-s", "--savepath", default = 'fine_tune', help="directory of the model's saved weights")
-args = parser.parse_args()
-print(args.modelname)
-print(args.savepath)
+# parser = argparse.ArgumentParser()
+# parser.add_argument("-m", "--modelname", default='GoldenRetriever', help="name of model class in GR src")
+# parser.add_argument("-s", "--savepath", default = 'fine_tune', help="directory of the model's saved weights")
+# args = parser.parse_args()
+# print(args.modelname)
+# print(args.savepath)
 
-if __name__ == '__main__':
-    start_time = datetime.datetime.now()
+# if __name__ == '__main__':
+#     start_time = datetime.datetime.now()
 
-    model_to_eval = getattr(models, args.modelname)()
-    if args.savepath != '':
-        model_to_eval.restore(args.savepath)
+#     model_to_eval = getattr(models, args.modelname)()
+#     if args.savepath != '':
+#         model_to_eval.restore(args.savepath)
 
-    df, train_dict, test_dict, train_idx_all, test_idx_all = kb_train_test_split(0.6, 100)
+#     df, train_dict, test_dict, train_idx_all, test_idx_all = kb_train_test_split(0.6, 100)
 
-    eval_dict = {}
-    # for kb_name in ['PDPA', 'nrf', 'critical-illness-insurance', 'other-insurance', 'Steam_engine', '1973_oil_crisis']:
-    for kb_name in df.kb_name.unique():
-        print(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
+#     eval_dict = {}
+#     # for kb_name in ['PDPA', 'nrf', 'critical-illness-insurance', 'other-insurance', 'Steam_engine', '1973_oil_crisis']:
+#     for kb_name in df.kb_name.unique():
+#         print(f"\n {datetime.datetime.now()} - Evaluating on {kb_name} \n")
 
-        # dict stores eval metrics and relevance ranks
-        eval_kb_dict = {}
+#         # dict stores eval metrics and relevance ranks
+#         eval_kb_dict = {}
 
-        # test-mask is a int array
-        # that chooses specific test questions
-        # e.g.  test_mask [True, True, False]
-        #       query_idx = [0,1]
-        kb_df = df.loc[df.kb_name == kb_name]
-        kb_idx = df.loc[df.kb_name == kb_name].index
-        test_mask = np.isin(kb_idx, test_dict[kb_name])
-        # test_idx_mask = np.arange(len(kb_df))[test_mask]
+#         # test-mask is a int array
+#         # that chooses specific test questions
+#         # e.g.  test_mask [True, True, False]
+#         #       query_idx = [0,1]
+#         kb_df = df.loc[df.kb_name == kb_name]
+#         kb_idx = df.loc[df.kb_name == kb_name].index
+#         test_mask = np.isin(kb_idx, test_dict[kb_name])
+#         # test_idx_mask = np.arange(len(kb_df))[test_mask]
 
-        # get string queries and responses, unduplicated as a list
-        kb_df = kb_df.reset_index(drop=True)
-        query_list = kb_df.query_string.tolist()
-        response_list_w_duplicates = kb_df.processed_string.tolist()
-        response_list = kb_df.processed_string.drop_duplicates().tolist() 
+#         # get string queries and responses, unduplicated as a list
+#         kb_df = kb_df.reset_index(drop=True)
+#         query_list = kb_df.query_string.tolist()
+#         response_list_w_duplicates = kb_df.processed_string.tolist()
+#         response_list = kb_df.processed_string.drop_duplicates().tolist() 
 
-        # this index list is important
-        # it lists the index of the correct answer for every question
-        # e.g. for 20 questions mapped to 5 repeated answers
-        # it has 20 elements, each between 0 and 4
-        response_idx_list = [response_list.index(nonunique_response_string) 
-                            for nonunique_response_string in response_list_w_duplicates]
-        response_idx_list = np.array(response_idx_list)[[test_mask]]
+#         # this index list is important
+#         # it lists the index of the correct answer for every question
+#         # e.g. for 20 questions mapped to 5 repeated answers
+#         # it has 20 elements, each between 0 and 4
+#         response_idx_list = [response_list.index(nonunique_response_string) 
+#                             for nonunique_response_string in response_list_w_duplicates]
+#         response_idx_list = np.array(response_idx_list)[[test_mask]]
 
-        # get encoded queries and responses
-        encoded_queries = model_to_eval.predict(query_list, type='query')
-        encoded_responses = model_to_eval.predict(response_list, type='response')
+#         # get encoded queries and responses
+#         encoded_queries = model_to_eval.predict(query_list, type='query')
+#         encoded_responses = model_to_eval.predict(response_list, type='response')
 
-        # get matrix of shape [Q_test x Responses]
-        # this holds the relevance rankings of the responses to each test ques
-        test_similarities = cosine_similarity(encoded_queries[test_mask], encoded_responses)
-        answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1
+#         # get matrix of shape [Q_test x Responses]
+#         # this holds the relevance rankings of the responses to each test ques
+#         test_similarities = cosine_similarity(encoded_queries[test_mask], encoded_responses)
+#         answer_ranks = test_similarities.shape[-1] - rankdata(test_similarities, axis=1) + 1
 
-        # ranks_to_eval
-        ranks_to_eval = [answer_rank[correct_answer_idx] 
-                        for answer_rank, correct_answer_idx 
-                        in zip( answer_ranks, response_idx_list )]
+#         # ranks_to_eval
+#         ranks_to_eval = [answer_rank[correct_answer_idx] 
+#                         for answer_rank, correct_answer_idx 
+#                         in zip( answer_ranks, response_idx_list )]
 
 
-        # get eval metrics -> eval_kb_dict 
-        # store in one large dict -> eval_dict
-        eval_kb_dict = get_eval_dict(ranks_to_eval)
-        eval_kb_dict['answer_ranks'] = answer_ranks
-        eval_kb_dict['ranks_to_eval'] = ranks_to_eval
-        eval_dict[kb_name] = eval_kb_dict.copy()
+#         # get eval metrics -> eval_kb_dict 
+#         # store in one large dict -> eval_dict
+#         eval_kb_dict = get_eval_dict(ranks_to_eval)
+#         eval_kb_dict['answer_ranks'] = answer_ranks
+#         eval_kb_dict['ranks_to_eval'] = ranks_to_eval
+#         eval_dict[kb_name] = eval_kb_dict.copy()
 
-    # overall_eval is a dataframe that 
-    # tracks performance across the different knowledge bases
-    # but individually
-    overall_eval = pd.DataFrame(eval_dict).T.drop(['answer_ranks', 'ranks_to_eval'], axis=1)
+#     # overall_eval is a dataframe that 
+#     # tracks performance across the different knowledge bases
+#     # but individually
+#     overall_eval = pd.DataFrame(eval_dict).T.drop(['answer_ranks', 'ranks_to_eval'], axis=1)
 
-    # Finally we get eval metrics for across all different KBs
-    correct_answer_ranks_across_kb = []
-    for key in eval_dict.keys():
-        correct_answer_ranks_across_kb.extend(eval_dict[key]['ranks_to_eval'])
+#     # Finally we get eval metrics for across all different KBs
+#     correct_answer_ranks_across_kb = []
+#     for key in eval_dict.keys():
+#         correct_answer_ranks_across_kb.extend(eval_dict[key]['ranks_to_eval'])
         
-    # get eval metrics across all knowledge bases combined
-    across_kb_scores = get_eval_dict(correct_answer_ranks_across_kb)
-    across_kb_scores_ = {'Across_all_kb':across_kb_scores}
-    across_kb_scores_ = pd.DataFrame(across_kb_scores_).T
+#     # get eval metrics across all knowledge bases combined
+#     across_kb_scores = get_eval_dict(correct_answer_ranks_across_kb)
+#     across_kb_scores_ = {'Across_all_kb':across_kb_scores}
+#     across_kb_scores_ = pd.DataFrame(across_kb_scores_).T
 
-    overall_eval = pd.concat([overall_eval,across_kb_scores_])
-    print(overall_eval)
+#     overall_eval = pd.concat([overall_eval,across_kb_scores_])
+#     print(overall_eval)
 
-    # save the scores and details for later evaluation
-    overall_eval.to_excel('GoldenRetrieval_eval_scores.xlsx')
-    with open("GoldenRetrieval_eval_details.pickle", 'wb') as handle:
-        pickle.dump(eval_dict, handle)
+#     # save the scores and details for later evaluation
+#     overall_eval.to_excel('GoldenRetrieval_eval_scores.xlsx')
+#     with open("GoldenRetrieval_eval_details.pickle", 'wb') as handle:
+#         pickle.dump(eval_dict, handle)
 
-    end_time = datetime.datetime.now()
-    print(f"Start      : {start_time}")
-    print(f"End        : {end_time}")
-    print(f"Time Taken : {end_time - start_time}")
+#     end_time = datetime.datetime.now()
+#     print(f"Start      : {start_time}")
+#     print(f"End        : {end_time}")
+#     print(f"Time Taken : {end_time - start_time}")
 
 """
 Expected output for selected KBs

@@ -19,7 +19,7 @@ def kb_train_test_split(test_size, random_state):
     test_idx_all: (list) ids for testing set
     """
 
-    cnxn_path = "./db_cnxn_str.txt"
+    cnxn_path = "/polyaxon-data/goldenretriever/db_cnxn_str.txt"
     conn = pyodbc.connect(open(cnxn_path, 'r').read())
 
     SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.id, dbo.query_db.query_string, \
