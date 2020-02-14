@@ -204,7 +204,7 @@ def main(_):
     logger.info(f'Saving Eval_Dict at: {EVAL_DICT_PATH}')
 
     # Create training set based on chosen random seed
-    logger.info("Generating training set")
+    logger.info("Generating training/ evaluation set")
 
     # Get df using kb_handler
     kbh = kb_handler()
@@ -217,13 +217,21 @@ def main(_):
     for single_kb in kbs:
         kb_df = single_kb.create_df()
         df_list.append(kb_df)
-        idx = np.array(kb_df.index.tolist())
-        train_idx, test_idx = train_test_split(idx, test_size=0.2, random_state=FLAGS.random_seed)
-       
-        train_dict[single_kb.name] = train_idx
-        test_dict[single_kb.name] = test_idx
-   
-    df = pd.concat(df_list)
+        
+    df = pd.concat(df_list).reset_index(drop='True')
+
+    kb_names = df['kb_name'].unique()
+
+    train_dict = dict()
+    test_dict = dict()
+
+    for kb_name in kb_names:
+        kb_id = df[df['kb_name'] == kb_name].index.values
+        train_idx, test_idx = train_test_split(kb_id, test_size=0.6,
+                                            random_state=100)
+
+        train_dict[kb_name] = train_idx
+        test_dict[kb_name] = test_idx
 
     train_dict_with_neg = _generate_neg_ans(df, train_dict)
     train_pos_idxs = np.concatenate([v[0] for k,v in train_dict_with_neg.items()], axis=0)
@@ -247,14 +255,14 @@ def main(_):
         raise ValueError("Model not found: %s" % (FLAGS.model_name))
 
     model = models[FLAGS.model_name](max_seq_length=FLAGS.max_seq_length)
-    logger.info(f'Training with max_seq_length: {model.max_seq_length}')
+    logger.info(f"Model's max_seq_length: {model.max_seq_length}")
 
     # Set optimizer parameters
     model.opt_params = {'learning_rate': FLAGS.learning_rate,'beta_1': FLAGS.beta_1,'beta_2': FLAGS.beta_2,'epsilon': FLAGS.epsilon}
 
     # Fine-tune
-    logger.info("Fine-tuning model")
     if FLAGS.task_type == 'train_eval':
+        logger.info("Fine-tuning model")
             # Required for contrastive loss
             # label = tf.placeholder(tf.int32, [None], name='label')
 
@@ -341,7 +349,11 @@ def main(_):
     if FLAGS.task_type == 'train_eval':
         model.restore(os.path.join(MODEL_BEST_DIR, str(best_epoch)))
     else:
-        model.restore(FLAGS.eval_model_dir)
+        if FLAGS.eval_model_dir:
+            model.restore(FLAGS.eval_model_dir)
+        else:
+            logger.info("Using out-of-box model")
+            pass
 
     # Output scores based on eval_script
     logger.info("Evaluating model")
