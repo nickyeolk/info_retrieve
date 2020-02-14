@@ -5,12 +5,14 @@ import pandas as pd
 import numpy as np
 import datetime
 import tensorflow_text
+import pyodbc
 from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
 from tensorflow.keras.optimizers import Adam
 from transformers import AlbertTokenizer, TFAlbertModel
 from .bert_tokenization import FullTokenizer, get_masks, get_segments, get_ids, truncate_str, preprocess_one_str, preprocess_str
 from .metric_learning import triplet_loss
+from .kb_handler import kb
 
 
 class GoldenRetriever:
@@ -27,7 +29,7 @@ class GoldenRetriever:
     
     """
      
-    def __init__(self, max_seq_length=512):
+    def __init__(self, max_seq_length=512, **kwargs):
         """
         initialize the model. load google USE embedding
    
@@ -37,13 +39,14 @@ class GoldenRetriever:
 
         # self.v=['QA/Final/Response_tuning/ResidualHidden_1/dense/kernel','QA/Final/Response_tuning/ResidualHidden_0/dense/kernel', 'QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
         self.v=['QA/Final/Response_tuning/ResidualHidden_1/AdjustDepth/projection/kernel']
-        self.vectorized_knowledge = {}
-        self.text = {}
-        self.questions = {}
-        self.opt_params = {'learning_rate':0.001,'beta_1':0.9,'beta_2':0.999,'epsilon':1e-07}
+        self.kb = {}
+        if kwargs:
+            self.opt_params = kwargs
+        else: # good defaults for params
+            self.opt_params = {'learning_rate':0.001,'beta_1':0.9,'beta_2':0.999,'epsilon':1e-07}
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/2')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
         self.init_signatures()
 
 
@@ -72,18 +75,30 @@ class GoldenRetriever:
 
         """
         if type=='query':
-            encoded_queries = [self.question_encoder(tf.constant([t]))['outputs'] for t in text]
-            encoded_queries_tensor = tf.concat(encoded_queries, axis=0)
-            return encoded_queries_tensor
+            if isinstance(text,str):
+                return self.question_encoder(tf.constant([text]))['outputs']
             # return self.session.run(self.question_embeddings, feed_dict={self.question:text})['outputs']
+            elif hasattr(text, '__iter__'):
+                return tf.concat([self.question_encoder(tf.constant([one_text]))['outputs'] for one_text in text], axis=0)
+
         elif type=='response':
+            """
+            A frequent error is OOM - Error recorded below.
+            The fix is to encode each entry separately.
+            This is implemented in a list comprehension.
+            """
             if not context:
                 context = text
-            
-            encoded_responses = [self.response_encoder(input=tf.constant(t),
-                                 context=tf.constant(c))['outputs'] for t, c in zip(text, context)]
-            encoded_responses_tensor = tf.concat(encoded_responses, axis=0)
-            return encoded_responses_tensor
+
+            if isinstance(text,str):
+                return self.response_encoder(input=tf.constant([text]), context=tf.constant([context]))['outputs']
+            elif hasattr(text, '__iter__'):
+
+                encoded_responses = [self.response_encoder(input=tf.constant(t),
+                                    context=tf.constant(c))['outputs'] for t, c in zip(text, context)]
+                encoded_responses_tensor = tf.concat(encoded_responses, axis=0)
+                return encoded_responses_tensor
+                
         else: print('Type of prediction not defined')
 
 
@@ -100,10 +115,16 @@ class GoldenRetriever:
         return the top K vectorized answers and their scores
 
         """
-        similarity_score=cosine_similarity(self.vectorized_knowledge[kb_name], self.predict([querystring], type=predict_type))
+        similarity_score=cosine_similarity(self.kb[kb_name].vectorised_responses, self.predict([querystring], type=predict_type))
         sortargs=np.flip(similarity_score.argsort(axis=0))
         sortargs=[x[0] for x in sortargs]
-        sorted_ans=[self.text[kb_name][i] for i in sortargs]
+        # sorted answer 
+        # conditional if there is a context string, 
+        # then include as a line-separated pre-text
+        sorted_ans=[]
+        for i in sortargs:
+            ans = self.kb[kb_name].responses.context_string.iloc[i] + '\n' + self.kb[kb_name].responses.raw_string.iloc[i] if self.kb[kb_name].responses.context_string.iloc[i] != '' else self.kb[kb_name].responses.raw_string.iloc[i]
+            sorted_ans.append(ans)
         if index:
             return sorted_ans[:top_k], sortargs[:top_k]
         return sorted_ans[:top_k], similarity_score[sortargs[:top_k]] 
@@ -154,7 +175,6 @@ class GoldenRetriever:
                                                                     context=tf.constant(neg_answer_context))['outputs']
                 cost_value = triplet_loss(question_embeddings, response_embeddings, neg_response_embeddings)
 
-                
         # record loss     
         self.cost_history.append(cost_value.numpy().mean())
         
@@ -167,44 +187,22 @@ class GoldenRetriever:
 
     def load_kb(self, kb_):
         """
-        Give either path to .txt document or list of clauses.
-        For text document, each clause is separated by 2 newlines ('\\n\\n')
-        
-        Parameters:
-        is_faq(boolean): can be in the format of FAQ. 
+        Load the knowledge base or bases
 
-        Returns:
-        create the knowledge base
+        args:
+        ----
+            kb: (kb object as defined in kb_handler)
 
         """
-        if text_list:
-            self.text[kb_name] = text_list
-            if is_faq:
-                self.questions[kb_name] = question_list
-        elif path_to_kb:
-            if is_faq:
-                self.text[kb_name], self.questions[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
-            else:
-                self.text[kb_name] = split_txt(read_txt(path_to_kb), is_faq)
-        elif raw_text:
-            delim = '\n'
-            self.text[kb_name] = split_txt([front+delim for front in raw_text.split('\n')])
-        else: raise NameError('invalid kb input!')
-        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
-        print('knowledge base lock and loaded!')
+        if type(kb_) == kb:
+            context_and_raw_string = kb_.responses.context_string.fillna('') + ' ' + kb_.responses.raw_string.fillna('')
+            kb_.vectorised_responses = self.predict(clean_txt(context_and_raw_string), type='response')
+            self.kb[kb_.name] = kb_
+            print(f'{datetime.datetime.now()} : kb loaded - {kb_.name} ')
 
-
-    def load_csv_kb(self, path_to_kb=None, kb_name='default_kb', meta_col='meta', answer_col='answer', 
-                    query_col='question', answer_str_col='answer', cutoff=None):
-
-        """
-        load the document in csv format
-
-        """
-        self.text[kb_name], self.questions[kb_name] = read_kb_csv(path_to_kb, meta_col=meta_col, answer_col=answer_col, 
-                            query_col=query_col, answer_str_col=answer_str_col, cutoff=None)
-        self.vectorized_knowledge[kb_name] = self.predict(clean_txt(self.text[kb_name]), type='response')
-        print('knowledge base (csv) lock and loaded!')
+        elif hasattr(kb_, '__iter__'):
+            for one_kb in kb_:
+                self.load_kb(one_kb)
 
 
     def export(self, savepath='fine_tuned'):
