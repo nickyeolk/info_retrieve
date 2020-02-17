@@ -442,10 +442,14 @@ def remove_knowledge_base_from_sql():
     }
 
     for id_column, table_name in column_to_table.items():
+
         id_to_delete = del_kb.loc[:,id_column].dropna().apply(int).unique().tolist()
         id_to_delete = [[id_] for id_ in id_to_delete]
         print(f"{table_name} \n {id_to_delete} \n")
-        cursor.executemany('DELETE FROM "{}" WHERE id = (?)'.format(table_name), id_to_delete)
+
+        if len(id_to_delete)>0:
+            cursor.executemany('DELETE FROM "{}" WHERE id = (?)'.format(table_name), id_to_delete)
+            
     cursor.commit()
 
     return jsonify(message="Success")
