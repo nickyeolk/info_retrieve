@@ -18,9 +18,9 @@ RUN pip install flask \
 && ACCEPT_EULA=Y apt-get -y install msodbcsql17 \
 && apt-get -y install unixodbc unixodbc-dev \
 && pip install pyodbc \
-&& pip install waitress
-# && apt-get -y install wget \
-# && wget https://finetunedweights.blob.core.windows.net/finetuned01/google_use_nrf_pdpa_tuned.tar.gz \
-# && tar -zxvf google_use_nrf_pdpa_tuned.tar.gz
+&& pip install waitress \
+&& apt-get -y install wget \
+&& wget https://finetunedweights.blob.core.windows.net/finetuned02/variables.tar.gz \
+&& tar -zxvf variables.tar.gz
 # CMD ["python", "app_flask.py", "-db", "db_cnxn_str.txt"]
 CMD ["streamlit", "run", "--server.port", "5000","--server.headless","true", "--browser.serverAddress","0.0.0.0", "--server.enableCORS", "false",  "app2.py"]

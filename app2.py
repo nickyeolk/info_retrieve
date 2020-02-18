@@ -8,7 +8,7 @@ from src.kb_handler import kb_handler
 @st.cache(allow_output_mutation=True)
 def init():
     retriever = GoldenRetriever()
-    #retriever.restore('./google_use_nrf_pdpa_tuned/variables-0')
+    retriever.restore('./2/')
 
     # parse text into kb
     kbh = kb_handler()
@@ -99,6 +99,8 @@ if st.button('Fetch') or (data != kb_to_starqn[kb]): #So the answer will not app
 st.markdown(
 """
 <details><summary>Sample sentences</summary>
+<strong>COVID-19</strong>
+<p>Why are schools still continuing with CCAs and PE lessons?</p>
 <strong>PDPA</strong>
 <p>How long can an organisation retain its customers' personal data?</p>
 <strong>HDB resale terms and conditions</strong>
