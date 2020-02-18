@@ -119,7 +119,26 @@ class kb:
         df = df.assign(kb_name = self.name)
 
         return df
+        
+    def json(self, hashkey=None):
+        """
+        Create json dict to use with flask endpoint
+        """
+        json_dict = {}
 
+        if hashkey is not None:
+            json_dict['hashkey'] = hashkey
+        json_dict['kb_name'] = self.name
+
+        json_dict['kb'] = {}
+        json_dict['kb']['responses'] = self.responses.raw_string.tolist()
+        json_dict['kb']['contexts'] = self.responses.context_string.tolist()
+
+        if (len(self.queries) > 0) & (len(self.mapping) > 0):
+            json_dict['kb']['queries'] = self.queries.query_string.tolist()
+            json_dict['kb']['mapping'] = self.mapping
+
+        return json_dict
 
 
 class kb_handler():
