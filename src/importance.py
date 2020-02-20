@@ -59,7 +59,7 @@ def parse_string(string):
         1. its words and punctuations
         2. List of idx
     """
-    list_of_words_and_puncs = re.findall(r'''[\w']+|[.,!?;-~{}`´_<=>:/@*()&'$%#"]''', string) 
+    list_of_words_and_puncs = re.findall(r'''[\w']+|[.,!?;-~-{}`´_<=>:/@*()&'$%#"]''', string) 
     list_of_word_idx = [i for i, word in enumerate(list_of_words_and_puncs)]
     
     return list_of_words_and_puncs
