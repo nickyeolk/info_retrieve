@@ -11,9 +11,6 @@ Sample code in ipython kernel:
     from IPython.core.display import display, HTML
     from ipywidgets import interact
 
-    import sys
-    sys.path.append('..')
-
     from src.importance import importance_by_erasure, partial_highlight
     from src.model import GoldenRetriever
 
