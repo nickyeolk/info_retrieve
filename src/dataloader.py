@@ -55,3 +55,26 @@ def kb_train_test_split(test_size, random_state):
     
     return df, train_dict, test_dict, train_idx_all, test_idx_all
 
+def document_retrieval(db_string_path):
+    conn = pyodbc.connect(open(db_string_path, 'r').read())
+    SQL_Query = pd.read_sql_query('''SELECT dbo.kb_raw.id, kb_name, STRING_AGG(raw_string,' ') as raw_txt 
+                                    FROM dbo.kb_raw
+                                    inner join dbo.kb_clauses as kbc
+                                    ON kbc.raw_id=dbo.kb_raw.id
+                                    WHERE directory_id=11
+                                    GROUP BY kb_name, dbo.kb_raw.id
+                                    ''', conn)
+    df_kb = pd.DataFrame(SQL_Query)
+
+    SQL_Query = pd.read_sql_query('''SELECT dbo.kb_clauses.raw_id as doc_id, query_string 
+                                    FROM dbo.query_db
+                                    INNER JOIN dbo.query_labels
+                                    ON dbo.query_db.id=dbo.query_labels.query_id
+                                    INNER JOIN dbo.kb_clauses
+                                    ON dbo.query_labels.clause_id=dbo.kb_clauses.id
+                                    INNER JOIN dbo.kb_raw
+                                    ON dbo.kb_raw.id=dbo.kb_clauses.raw_id
+                                    WHERE dbo.kb_raw.directory_id=11
+                                        ''', conn)
+    df_query = pd.DataFrame(SQL_Query)
+    return df_kb, df_query
