@@ -17,6 +17,7 @@ import pandas.io.sql as pds
 from flask import Flask, jsonify, request
 from waitress import serve
 import argparse
+import tarfile
 
 from src.model import GoldenRetriever
 from src.kb_handler import kb_handler
@@ -453,6 +454,64 @@ def remove_knowledge_base_from_sql():
     cursor.commit()
 
     return jsonify(message="Success")
+
+
+@app.route("/upload_weights", methods=['POST'])
+    """
+    Upload finetuned weights to microsoft azure blob storage container
+    
+    args:
+    ----
+        access_key: (str) key for authorized access to blob storage container.
+        container_name: (str) name of newly created container that will store weights
+        weights_folder_name: (str) name of the newly stored weights .gz file in the container
+        weights_path: (str) path leading to the weights that will be uploaded to the container
+
+
+    Sample json body:
+        {
+         'access_key': ACCESSKEY,
+         'container_name': CONTAINER_NAME,
+         'weights_folder_name': WEIGHTS_FOLDER_NAME
+         'weights_path': WEIGHTS_PATH
+        } 
+    """
+
+    if not all([key in ['access_key', 'container_name', 'weights_folder_name', 'weights_path'] for key in request_dict.keys()]):
+        raise InvalidUsage(message="upload_weights endpoint requires arguments: access_key, container_name, weights_folder_name, weights_path")
+
+    ACCESSKEY = request_dict.get('access_key', '')
+    CONTAINER_NAME = request_dict.get('container_name', '')
+    WEIGHTS_FOLDER_NAME = request_dict.get('weights_folder_name', '')
+    WEIGHTS_PATH = request.get('weights_path','')
+
+    # Create the BlobServiceClient that is used to call the Blob service for the storage account
+    conn_str = ACCESSKEY
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str=conn_str)
+
+    # Create a container called 'quickstartblobs' and Set the permission so the blobs are public.
+    blob_service_client.create_container(
+        CONTAINER_NAME, public_access=PublicAccess.Container)
+
+    with tarfile.open(WEIGHTS_FOLDER_NAME, "w:gz") as tar:
+        tar.add(WEIGHTS_PATH, arcname=os.path.basename(WEIGHTS_FOLDER_NAME))
+
+    ZIP_FOLDER_PATH = WEIGHTS_PATH + WEIGHTS_FOLDER_NAME
+
+    print("\nUploading to Blob storage as blob" + ZIP_FOLDER_PATH)
+
+    # Upload the created file, use local_file_name for the blob name
+    blob_client = blob_service_client.get_blob_client(
+        container=CONTAINER_NAME, blob=WEIGHTS_FOLDER_NAME)
+
+    blob_client.upload_blob(ZIP_FOLDER_PATH)
+
+    # List the blobs in the container
+    container = blob_service_client.get_container_client(container=CONTAINER_NAME)
+    generator = container.list_blobs()
+    all_blobs = ["\t Blob name: " + blob.name for blob in generator]
+
+    return jsonify(message=all_blobs)
 
 
 if __name__ == '__main__':
