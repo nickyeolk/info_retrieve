@@ -289,7 +289,7 @@ class kb_handler():
         kb = self.parse_df(kb_name, df, answer_col, query_col, context_col)
         return kb
 
-    def pdf_converter(self, PDF_file_path, header="", NumOfAppendix=0, kb_name='pdf_kb'):
+    def parse_pdf(self, PDF_file_path, header="", NumOfAppendix=0, kb_name='pdf_kb'):
         """
         Function to convert PDFs to Dataframe with columns as index number & paragraphs.
 
