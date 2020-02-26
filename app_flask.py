@@ -20,12 +20,6 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, P
 import argparse
 import tarfile
 import os
-import sys
-import time
-from werkzeug.datastructures import FileStorage
-
-sys.path.append('.')
-
 
 from src.model import GoldenRetriever
 from src.kb_handler import kb_handler
