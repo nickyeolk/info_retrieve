@@ -20,6 +20,11 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, P
 import argparse
 import tarfile
 import os
+import sys
+import time
+from werkzeug.datastructures import FileStorage
+
+sys.path.append('.')
 
 
 from src.model import GoldenRetriever
@@ -462,53 +467,72 @@ def remove_knowledge_base_from_sql():
 @app.route("/upload_weights", methods=['POST'])
 def upload_weights():
     """
-    Upload finetuned weights to microsoft azure blob storage container
+    Upload finetuned weights to an azure blob storage container
     
     args:
     ----
-        conn_str: (str) connection string for authorized access to blob storage container.
+        conn_str: (str) connection string for authorized access to blob storage
         container_name: (str) name of newly created container that will store weights
-        weights_folder_name: (str) name of the newly stored weights .gz file in the container
-        weights_path: (str) path leading to the weights that will be uploaded to the container
+        blob_name: (str) name of the .tar.gz file stored in server. same name will be used for the newly stored weights in the container
+        server_weights_path: (str) path leading to the server folder containing weights that will be uploaded (path to folder)
 
 
     Sample json body:
         {
          'conn_str': CONN_STR,
          'container_name': CONTAINER_NAME,
-         'weights_folder_name': WEIGHTS_FOLDER_NAME
-         'weights_path': WEIGHTS_PATH
+         'blob_name': BLOB_NAME
+         'server_weights_path': SERVER_WEIGHTS_PATH
         } 
     """
+    request_dict = request.form.to_dict()
 
-    request_dict = request.get_json()
+    if not all([key in ['conn_str', 'container_name', 'blob_name', 'server_weights_path'] for key in request_dict.keys()]):
+        raise InvalidUsage(message="upload_weights endpoint requires arguments: conn_str, container_name, blob_name")
 
-    if not all([key in ['conn_str', 'container_name', 'weights_folder_name', 'weights_path'] for key in request_dict.keys()]):
-        raise InvalidUsage(message="upload_weights endpoint requires arguments: conn_str, container_name, weights_folder_name, weights_path")
+    CONN_STR = request.form['conn_str']
+    CONTAINER_NAME = request.form['container_name']
+    BLOB_NAME = request.form['blob_name']
+    SERVER_WEIGHTS_PATH = request.form['server_weights_path']
 
-    CONN_STR = request_dict.get('conn_str', '')
-    CONTAINER_NAME = request_dict.get('container_name', '')
-    WEIGHTS_FOLDER_NAME = request_dict.get('weights_folder_name', '')
-    WEIGHTS_PATH = request_dict.get('weights_path','')
+
 
     # Create the BlobServiceClient that is used to call the Blob service for the storage account
-    conn_str = CONN_STR
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str=conn_str)
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str=CONN_STR)
 
-    with tarfile.open(WEIGHTS_FOLDER_NAME + '.tar.gz', mode='w:gz') as archive:
-        archive.add(WEIGHTS_PATH, recursive=True)
+    # Create a container. Use public_access=PublicAccess.Container if container is open to public
+    try:
+        blob_service_client.create_container(CONTAINER_NAME, public_access=None)
+    except:
+        return jsonify(message='Container already exists, please select another container_name and try again')
 
-    # Create a container
-    container_name = CONTAINER_NAME
-    blob_service_client.create_container(
-        container_name, public_access=PublicAccess.Container)
 
-    # Upload the created file, use local_file_name for the blob name
-    blob_client = blob_service_client.get_blob_client(
-        container=CONTAINER_NAME, blob=WEIGHTS_FOLDER_NAME + '.tar.gz')
+    # For files stored in server
+    if SERVER_WEIGHTS_PATH != '':
 
-    blob_client.upload_blob(os.path.join(os.getcwd(), WEIGHTS_FOLDER_NAME + '.tar.gz'))
+        # Create the .tar.gz file that contains the weights to be uploaded. will be saved in current directory
+        with tarfile.open(BLOB_NAME, mode='w:gz') as archive:
+            archive.add(SERVER_WEIGHTS_PATH, recursive=True)
 
+
+        # Upload the created file
+        blob_client = blob_service_client.get_blob_client(
+            container=CONTAINER_NAME, blob=BLOB_NAME)
+
+        blob_client.upload_blob(os.path.join(os.getcwd()
+
+
+    # For files stored in user's local 
+    if request.files:
+        f = request.files['file']
+
+        # Upload the created file, use WEIGHTS_FOLDER_NAME as the blob name
+        blob_client = blob_service_client.get_blob_client(
+            container=CONTAINER_NAME, blob=f.filename)
+
+        blob_client.upload_blob(f)
+
+    
     return jsonify(message="Success")
 
 
