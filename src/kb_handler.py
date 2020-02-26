@@ -289,6 +289,59 @@ class kb_handler():
         kb = self.parse_df(kb_name, df, answer_col, query_col, context_col)
         return kb
 
+    def pdf_converter(self, PDF_file_path, header="", NumOfAppendix=0, kb_name='pdf_kb'):
+        """
+        Function to convert PDFs to Dataframe with columns as index number & paragraphs.
+
+        Parameters
+        ----------
+
+        PDF_file_path : string
+            The filename and path of pdf 
+
+        header: string
+            To remove the header in each page
+
+        NumOfAppendix: int
+            To remove the Appendix after the main content
+            
+        kb_name: str
+            Name of returned kb object
+
+        Returns
+        -------------
+        kb : kb object
+        """
+
+        raw = parser.from_file(PDF_file_path)
+        s=raw["content"].strip()
+
+        s=re.sub(header,"",s)
+        s=s+"this is end of document."
+        s=re.split("\n\nAPPENDIX ",s)
+        newS=s[:len(s)-NumOfAppendix]
+        s=' '.join(newS)
+
+        s = re.sub('(\d)+(\-(\d)+)+',' newparagraph ',s)
+        paragraphs=re.split("newparagraph", s)
+        list_par=[]
+        
+        # (considered as a line)
+        for p in paragraphs:
+            if p is not None:
+                if not p.isspace():  # checking if paragraph is not only spaces
+                    list_par.append(p.strip().replace("\n", "")) # appending paragraph p as is to list_par
+        
+        list_par.pop(0)
+
+        # pd.set_option('display.max_colwidth', -1)
+        clause_df=pd.DataFrame(list_par, columns=['clause'])
+        
+        # convert to kb object
+        responses, queries, mapping = self.parse_df(kb_name, clause_df, 'clause')
+        return kb(kb_name, responses, queries, mapping) 
+
+
     def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
         """
         Load the knowledge bases from SQL.
