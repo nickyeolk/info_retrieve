@@ -6,6 +6,9 @@ This kb object may then be further used for finetuning and eval
 import pandas as pd
 import numpy as np
 import pyodbc
+from tika import parser
+import argparse
+import re
 
 def unique_indexing(non_unique):
     """
