@@ -473,8 +473,7 @@ def upload_weights():
     ----
         conn_str: (str) connection string for authorized access to blob storage
         container_name: (str) name of newly created container that will store weights
-        blob_name: (str) name of the .tar.gz file stored in server. same name will be used for the newly stored weights in the container
-        server_weights_path: (str) path leading to the server folder containing weights that will be uploaded (path to folder)
+        blob_name: (str) name to be used for the newly stored weights in the container
 
 
     Sample json body:
@@ -482,19 +481,17 @@ def upload_weights():
          'conn_str': CONN_STR,
          'container_name': CONTAINER_NAME,
          'blob_name': BLOB_NAME
-         'server_weights_path': SERVER_WEIGHTS_PATH
         } 
     """
+
     request_dict = request.form.to_dict()
 
-    if not all([key in ['conn_str', 'container_name', 'blob_name', 'server_weights_path'] for key in request_dict.keys()]):
+    if not all([key in ['conn_str', 'container_name', 'blob_name'] for key in request_dict.keys()]):
         raise InvalidUsage(message="upload_weights endpoint requires arguments: conn_str, container_name, blob_name")
 
     CONN_STR = request.form['conn_str']
     CONTAINER_NAME = request.form['container_name']
     BLOB_NAME = request.form['blob_name']
-    SERVER_WEIGHTS_PATH = request.form['server_weights_path']
-
 
 
     # Create the BlobServiceClient that is used to call the Blob service for the storage account
@@ -507,22 +504,7 @@ def upload_weights():
         return jsonify(message='Container already exists, please select another container_name and try again')
 
 
-    # For files stored in server
-    if SERVER_WEIGHTS_PATH != '':
-
-        # Create the .tar.gz file that contains the weights to be uploaded. will be saved in current directory
-        with tarfile.open(BLOB_NAME, mode='w:gz') as archive:
-            archive.add(SERVER_WEIGHTS_PATH, recursive=True)
-
-
-        # Upload the created file
-        blob_client = blob_service_client.get_blob_client(
-            container=CONTAINER_NAME, blob=BLOB_NAME)
-
-        blob_client.upload_blob(os.path.join(os.getcwd()
-
-
-    # For files stored in user's local 
+    # Upload file
     if request.files:
         f = request.files['file']
 
