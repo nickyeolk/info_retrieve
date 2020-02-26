@@ -176,7 +176,6 @@ class kb_handler():
                                    query_col: 'query_string'
                                   })
             
-        queries = []
         unique_responses_df = df.loc[~df.duplicated(), ['raw_string', 'context_string']].drop_duplicates().reset_index(drop=True)
         
         if query_col=='':
