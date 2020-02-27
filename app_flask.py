@@ -16,7 +16,10 @@ import pandas as pd
 import pandas.io.sql as pds
 from flask import Flask, jsonify, request
 from waitress import serve
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, PublicAccess
 import argparse
+import tarfile
+import os
 
 from src.model import GoldenRetriever
 from src.kb_handler import kb_handler
@@ -452,6 +455,60 @@ def remove_knowledge_base_from_sql():
             
     cursor.commit()
 
+    return jsonify(message="Success")
+
+
+@app.route("/upload_weights", methods=['POST'])
+def upload_weights():
+    """
+    Upload finetuned weights to an azure blob storage container
+    
+    args:
+    ----
+        conn_str: (str) connection string for authorized access to blob storage
+        container_name: (str) name of newly created container that will store weights
+        blob_name: (str) name to be used for the newly stored weights in the container
+
+
+    Sample json body:
+        {
+         'conn_str': CONN_STR,
+         'container_name': CONTAINER_NAME,
+         'blob_name': BLOB_NAME
+        } 
+    """
+
+    request_dict = request.form.to_dict()
+
+    if not all([key in ['conn_str', 'container_name', 'blob_name'] for key in request_dict.keys()]):
+        raise InvalidUsage(message="upload_weights endpoint requires arguments: conn_str, container_name, blob_name")
+
+    CONN_STR = request.form['conn_str']
+    CONTAINER_NAME = request.form['container_name']
+    BLOB_NAME = request.form['blob_name']
+
+
+    # Create the BlobServiceClient that is used to call the Blob service for the storage account
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str=CONN_STR)
+
+    # Create a container. Use public_access=PublicAccess.Container if container is open to public
+    try:
+        blob_service_client.create_container(CONTAINER_NAME, public_access=None)
+    except:
+        return jsonify(message='Container already exists, please select another container_name and try again')
+
+
+    # Upload file
+    if request.files:
+        f = request.files['file']
+
+        # Upload the created file, use WEIGHTS_FOLDER_NAME as the blob name
+        blob_client = blob_service_client.get_blob_client(
+            container=CONTAINER_NAME, blob=f.filename)
+
+        blob_client.upload_blob(f)
+
+    
     return jsonify(message="Success")
 
 
