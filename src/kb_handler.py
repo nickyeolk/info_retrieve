@@ -351,8 +351,6 @@ class kb_handler():
         GoldenRetriever keeps the responses text in the 
         text and vectorized_knowledge attributes 
         as dictionaries indexed by their respective kb names
-        
-        TODO: load vectorized knowledge from precomputed weights
 
         args:
             cnxn_path: (str) string directory of the connection string 

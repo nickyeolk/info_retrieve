@@ -94,8 +94,8 @@ class GoldenRetriever:
                 return self.response_encoder(input=tf.constant([text]), context=tf.constant([context]))['outputs']
             elif hasattr(text, '__iter__'):
 
-                encoded_responses = [self.response_encoder(input=tf.constant(t),
-                                    context=tf.constant(c))['outputs'] for t, c in zip(text, context)]
+                encoded_responses = [self.response_encoder(input=tf.constant([t]),
+                                    context=tf.constant([c]))['outputs'] for t, c in zip(text, context)]
                 encoded_responses_tensor = tf.concat(encoded_responses, axis=0)
                 return encoded_responses_tensor
                 
@@ -173,7 +173,7 @@ class GoldenRetriever:
                 """
                 neg_response_embeddings = self.neg_response_encoder(input=tf.constant(neg_answer), 
                                                                     context=tf.constant(neg_answer_context))['outputs']
-                cost_value = triplet_loss(question_embeddings, response_embeddings, neg_response_embeddings)
+                cost_value = triplet_loss(question_embeddings, response_embeddings, neg_response_embeddings, margin=margin)
 
         # record loss     
         self.cost_history.append(cost_value.numpy().mean())
