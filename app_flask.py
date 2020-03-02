@@ -236,10 +236,12 @@ def save_feedback():
 
     if not all([key in ['query_id', 'is_correct'] for key in request_dict.keys()]):
         raise InvalidUsage("request requires 'query_id', 'is_correct")
+    if not (type(request_dict["is_correct"]) == list) & all([type(feedback_)==int for feedback_ in request_dict['is_correct']]):
+        raise InvalidUsage("'is_correct' is to contain a list of integers, e.g. {'query_id':45, 'is_correct':[0,1,0,0,0]} indicates that the second ranked answer was correct")
 
     # 1. parse the request
-    query_id = request.get_json()["query_id"]
-    is_correct = request.get_json()["is_correct"]
+    query_id = request_dict["query_id"]
+    is_correct = request_dict["is_correct"]
     is_correct = is_correct+[False]*(5-len(is_correct)) if len(is_correct) < 5 else is_correct # ensures 5 entries
 
     # log the request in SQL
