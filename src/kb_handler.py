@@ -374,8 +374,6 @@ class kb_handler():
                     conn, 
                     params=[kb_name],
                     )
-            
-            kb_names = SQL_Query['kb_name'].unique() if len(kb_names) == 0 else kb_names
 
             # load name, responses, queries, mapping into kb object
             indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('').reset_index(drop=True) # fillna: not all responses have a context_string
