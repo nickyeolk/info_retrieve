@@ -48,11 +48,18 @@ This model is implemented as a flask app.
 Run `python app.py` to launch a web interface
 from which you can query some pre-set documents.
 
-To run the flask app using docker,
+To run the flask API using docker,
 
 1. Clone this repository.
-2. Build the container image: `docker build -t goldenretriever .`  
+2. Build the container image: `docker build -f api.Dockerfile -t goldenretriever .`  
 3. Run the container: `docker run -p 5000:5000 -it goldenretriever`  
+4. Access the endpoints at `http://localhost:5000`.
+
+Alternatively, to run the streamlit app using docker,
+
+1. Clone this repository.
+2. Build the container image: `docker build -f streamlit.Dockerfile -t goldenretriever .`  
+3. Run the container: `docker run -p 5000:5000 goldenretriever`  
 4. Access the web interface on your browser by navigating to `http://localhost:5000`.
 
 # Testing

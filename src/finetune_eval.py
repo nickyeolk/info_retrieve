@@ -17,7 +17,6 @@ from polyaxon_client.tracking import Experiment, get_log_level
 
 from src.model import GoldenRetriever, GoldenRetriever_BERT, GoldenRetriever_ALBERT
 from src.dataloader import kb_train_test_split
-from src.eval_model import mrr, recall_at_n, get_eval_dict
 from src.kb_handler import kb, kb_handler
 
 
@@ -180,6 +179,54 @@ def gen(batch_size, query, response, neg_response, shuffle_data=False):
             neg_r_batch = [x[2] for x in zip_list[offset:offset+batch_size]]
         
             yield(q_batch, r_batch, neg_r_batch)
+
+# metrics
+def mrr(ranks):
+    """
+    Calculate mean reciprocal rank
+    Function taken from: https://github.com/google/retrieval-qa-eval/blob/master/squad_eval.py
+
+    Args:
+    -----
+        ranks: (list) predicted ranks of the correct responses 
+    return:
+    -------
+        mrr: (float)
+    """
+    return sum([1/v for v in ranks])/len(ranks)
+
+def recall_at_n(ranks, n=3):
+    """
+    Calculate recall @ N
+    Function taken from: https://github.com/google/retrieval-qa-eval/blob/master/squad_eval.py
+
+    Args:
+    -----
+        ranks: (list) predicted ranks of the correct responses 
+    return:
+    -------
+        Recall@N: (float)
+    """
+    num = len([rank for rank in ranks if rank <= n])
+    return num / len(ranks)
+
+def get_eval_dict(ranks):
+    """
+    Score the predicted ranks according to various metricss
+
+    args:
+    ----
+        ranks: (list) predicted ranks of the correct responses 
+    return:
+    -------
+        eval_dict: (dict) contains the metrics and their respective keys
+    """
+    eval_dict = {}
+    eval_dict['mrr_score'] = mrr(ranks)
+    eval_dict['r1_score'] = recall_at_n(ranks, 1)
+    eval_dict['r2_score'] = recall_at_n(ranks, 2)
+    eval_dict['r3_score'] = recall_at_n(ranks, 3)
+    return eval_dict
 
 
 def main(_):

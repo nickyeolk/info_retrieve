@@ -351,8 +351,6 @@ class kb_handler():
         GoldenRetriever keeps the responses text in the 
         text and vectorized_knowledge attributes 
         as dictionaries indexed by their respective kb names
-        
-        TODO: load vectorized knowledge from precomputed weights
 
         args:
             cnxn_path: (str) string directory of the connection string 
@@ -361,28 +359,28 @@ class kb_handler():
                                          else if empty, parse all of them
         """
         conn = pyodbc.connect(open(cnxn_path, 'r').read())
-
-        SQL_Query = pd.read_sql_query('''SELECT dbo.query_labels.clause_id, dbo.query_labels.query_id, dbo.query_db.query_string, \
-                                    dbo.kb_clauses.context_string, dbo.kb_clauses.processed_string, dbo.kb_clauses.raw_string, dbo.kb_raw.kb_name, dbo.kb_raw.type FROM dbo.query_labels \
-                                    JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
-                                    JOIN dbo.kb_clauses ON dbo.query_labels.clause_id = dbo.kb_clauses.id \
-                                    JOIN dbo.kb_raw ON dbo.kb_clauses.raw_id = dbo.kb_raw.id''', conn)
-        conn.close()
-        
-        kb_names = SQL_Query['kb_name'].unique() if len(kb_names) == 0 else kb_names
         
         kbs = []
         for kb_name in kb_names:
-            
-            kb_df = SQL_Query.loc[SQL_Query.kb_name == kb_name]
+            kb_df = pd.read_sql_query("""select dbo.kb_clauses.id AS clause_id, dbo.kb_clauses.raw_string, dbo.kb_clauses.context_string, \
+                        dbo.kb_raw.kb_name, dbo.kb_clauses.processed_string, dbo.query_db.query_string,  dbo.query_db.id AS query_id \
+                        FROM dbo.users \
+                        LEFT JOIN dbo.kb_directory ON dbo.users.id = dbo.kb_directory.user_id \
+                        LEFT JOIN dbo.kb_raw ON dbo.kb_directory.id = dbo.kb_raw.directory_id \
+                        LEFT JOIN dbo.kb_clauses ON dbo.kb_raw.id = dbo.kb_clauses.raw_id \
+                        LEFT JOIN dbo.query_labels ON dbo.kb_clauses.id = dbo.query_labels.clause_id \
+                        LEFT JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
+                        WHERE dbo.kb_raw.kb_name = (?) """, 
+                    conn, 
+                    params=[kb_name],
+                    )
 
             # load name, responses, queries, mapping into kb object
-            indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('') # fillna: not all responses have a context_string
-            indexed_queries = kb_df.loc[:,['query_id', 'query_string']].drop_duplicates(subset=['query_id']).fillna('')
+            indexed_responses = kb_df.loc[:,['clause_id', 'raw_string', 'context_string']].drop_duplicates(subset=['clause_id']).fillna('').reset_index(drop=True) # fillna: not all responses have a context_string
+            indexed_queries = kb_df.loc[:,['query_id', 'query_string']].drop_duplicates(subset=['query_id']).dropna(subset=['query_string']).reset_index(drop=True)
             mappings = generate_mappings(kb_df.processed_string, kb_df.query_string)
-            
             kb_ = kb(kb_name, indexed_responses, indexed_queries, mappings)
-
             kbs.append(kb_)
-        
+
+        conn.close()
         return kbs

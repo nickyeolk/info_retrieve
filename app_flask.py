@@ -236,10 +236,12 @@ def save_feedback():
 
     if not all([key in ['query_id', 'is_correct'] for key in request_dict.keys()]):
         raise InvalidUsage("request requires 'query_id', 'is_correct")
+    if not (type(request_dict["is_correct"]) == list) & all([type(feedback_)==int for feedback_ in request_dict['is_correct']]):
+        raise InvalidUsage("'is_correct' is to contain a list of integers, e.g. {'query_id':45, 'is_correct':[0,1,0,0,0]} indicates that the second ranked answer was correct")
 
     # 1. parse the request
-    query_id = request.get_json()["query_id"]
-    is_correct = request.get_json()["is_correct"]
+    query_id = request_dict["query_id"]
+    is_correct = request_dict["is_correct"]
     is_correct = is_correct+[False]*(5-len(is_correct)) if len(is_correct) < 5 else is_correct # ensures 5 entries
 
     # log the request in SQL
@@ -382,80 +384,13 @@ def upload_knowledge_base_to_sql():
                                 list_of_query_labels)
             cursor.commit()
 
+    # load knowledge base into cached model
+    kbs = kbh.load_sql_kb(cnxn_path = args.dir, kb_names=[kb_name])
+    gr.load_kb(kbs)
 
     return jsonify(message="Success")
 
 
-
-
-@app.route("/delete", methods=['POST'])
-def remove_knowledge_base_from_sql():
-    """
-    Remove knowledge bases from SQL database
-    
-    args:
-    ----
-        hashkey: (str, optional) identification; intended to be their hashkey 
-                                 to manage exclusive knowledge base access.
-        kb_name: (str) Name of knowledge base to save as
-
-
-    Sample json body & sample kb:
-        {
-         'hashkey': HASHKEY,
-         'kb_name':'test1',
-        } 
-    """
-    request_timestamp = datetime.datetime.now()
-    request_dict = request.get_json()
-
-    # verify that required arguments are inside
-    if not all([key in ['hashkey','kb_name'] for key in request_dict.keys()]):
-        raise InvalidUsage(message="delete endpoint requires arguments: hashkey, kb_name")
-
-    HASHKEY = request_dict.get('hashkey', '')
-    kb_name = request_dict["kb_name"]
-
-    del_kb = pds.read_sql('''SELECT dbo.kb_raw.kb_name, dbo.kb_clauses.processed_string, dbo.query_db.query_string, dbo.kb_clauses.created_at, \
-                            dbo.kb_raw.directory_id, dbo.kb_clauses.raw_id, dbo.query_labels.clause_id, dbo.query_labels.query_id, dbo.query_labels.id \
-                            FROM dbo.users \
-                            LEFT JOIN dbo.kb_directory ON dbo.users.id = dbo.kb_directory.user_id \
-                            LEFT JOIN dbo.kb_raw ON dbo.kb_directory.id = dbo.kb_raw.directory_id \
-                            LEFT JOIN dbo.kb_clauses ON dbo.kb_raw.id = dbo.kb_clauses.raw_id \
-                            LEFT JOIN dbo.query_labels ON dbo.kb_clauses.id = dbo.query_labels.clause_id \
-                            LEFT JOIN dbo.query_db ON dbo.query_labels.query_id = dbo.query_db.id \
-                            WHERE dbo.kb_raw.kb_name = (?) \
-                            AND dbo.users.hashkey = (?) \
-                            AND dbo.kb_raw.type = 'user_uploaded'
-                            ''',
-                        conn,
-                        params = [kb_name, HASHKEY],
-                        )
-    del_kb.rename({'id':'query_labels_id'}, axis=1, inplace=True)   
-
-    if len(del_kb)==0:
-        return jsonify(message=f"No entries from kb_name {kb_name} to delete")
-
-    column_to_table = {
-        'query_labels_id':'query_labels',
-        'query_id':'query_db', 
-        'clause_id':'kb_clauses', 
-        'raw_id':'kb_raw', 
-        'directory_id':'kb_directory', 
-    }
-
-    for id_column, table_name in column_to_table.items():
-
-        id_to_delete = del_kb.loc[:,id_column].dropna().apply(int).unique().tolist()
-        id_to_delete = [[id_] for id_ in id_to_delete]
-        print(f"{table_name} \n {id_to_delete} \n")
-
-        if len(id_to_delete)>0:
-            cursor.executemany('DELETE FROM "{}" WHERE id = (?)'.format(table_name), id_to_delete)
-            
-    cursor.commit()
-
-    return jsonify(message="Success")
 
 
 @app.route("/upload_weights", methods=['POST'])
