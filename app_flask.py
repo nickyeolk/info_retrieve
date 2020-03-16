@@ -85,7 +85,7 @@ def get_last_insert_ids(cursor, inserted_iterable = ['single_string']):
     cursor.execute( "SELECT @@IDENTITY")
     last_insert_id = cursor.fetchall()
     last_insert_id = int(last_insert_id[0][0])
-    last_insert_ids = [i for i in range(last_insert_id, last_insert_id-len(inserted_iterable), -1)]
+    last_insert_ids = [i for i in range(last_insert_id, last_insert_id-len(inserted_iterable), -1)][::-1]
     return last_insert_ids
 
 def extract(lst, idx=0): 
