@@ -116,7 +116,7 @@ class kb:
         q_r_idx = list(map(list, zip(*self.mapping)))
 
         # Concat and create kb_name
-        df = pd.concat([self.queries.iloc[q_r_idx[0]].reset_index(drop=True), 
+        df = pd.concat([self.queries.drop_duplicates('query_string').iloc[q_r_idx[0]].reset_index(drop=True), 
                         processed_string_series.iloc[q_r_idx[1]].reset_index(drop=True)], 
                         axis=1)
         df = df.assign(kb_name = self.name)
@@ -138,7 +138,7 @@ class kb:
         json_dict['kb']['contexts'] = self.responses.context_string.tolist()
 
         if (len(self.queries) > 0) & (len(self.mapping) > 0):
-            json_dict['kb']['queries'] = self.queries.query_string.tolist()
+            json_dict['kb']['queries'] = self.queries.query_string.tolist() if type(self.queries)!=pd.Series else self.queries.tolist()
             json_dict['kb']['mapping'] = self.mapping
 
         return json_dict
@@ -360,6 +360,11 @@ class kb_handler():
         """
         conn = pyodbc.connect(open(cnxn_path, 'r').read())
         
+        if len(kb_names) == 0:
+            kb_names = pd.read_sql_query("""SELECT dbo.kb_raw.kb_name FROM dbo.kb_raw """, 
+                                        conn, 
+                                        ).kb_name
+
         kbs = []
         for kb_name in kb_names:
             kb_df = pd.read_sql_query("""select dbo.kb_clauses.id AS clause_id, dbo.kb_clauses.raw_string, dbo.kb_clauses.context_string, \
