@@ -4,9 +4,9 @@ WORKDIR /code
 RUN pip install tensorflow-hub \
 && pip install pandas \
 && pip install scikit-learn \
-&& pip install tensorflow==2.0.0 \
+&& pip install tensorflow==2.1.0 \
 # && pip install tensorflow-gpu==2.0.0 \
-&& pip install tensorflow-estimator==2.0.1 \
+&& pip install tensorflow-estimator==2.1.0 \
 && pip install tensorflow-text==2.0.1  \
 # && pip install tensorflow-addons==0.6.0 \
 && pip install transformers \

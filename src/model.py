@@ -46,7 +46,7 @@ class GoldenRetriever:
             self.opt_params = {'learning_rate':0.001,'beta_1':0.9,'beta_2':0.999,'epsilon':1e-07}
 
         # init saved model
-        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-multilingual-qa/3')
+        self.embed = hub.load('https://tfhub.dev/google/universal-sentence-encoder-qa/3')
         self.init_signatures()
 
 
