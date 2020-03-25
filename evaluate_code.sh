@@ -26,8 +26,7 @@ app_name=$CI_COMMIT_REF_NAME
 
 # }
 
-echo "export PATH="/root/anaconda3/bin:$PATH"" >> ~/.bashrc
-echo /bin/bash -c "source ~/.bashrc"
+echo "export PATH="/anaconda3/bin:$PATH""
 
 if [ -d "./tests" ]
 then
