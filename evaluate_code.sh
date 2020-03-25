@@ -28,14 +28,14 @@ app_name=$CI_COMMIT_REF_NAME
 
 if [ -d "./tests" ]
 then
-    if [ ! -f "./requirements.txt" ]
+    if [ ! -f "./environment.yml" ]
     then
-        echo "No requirements.txt file found"
+        echo "No environment.yml file found"
         exit 1
     fi
 
-    #conda env update -n base --file "$current_assignment/conda.yml"
-    pip install -r "./requirements.txt"
+    conda env update -n base --file "./environment.yml"
+    # pip install -r "./requirements.txt"
     # Manually put these back since conda env update removes them
     pip install pytest pylint radon
 
