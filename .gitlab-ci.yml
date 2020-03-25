@@ -2,6 +2,7 @@ image: docker-registry.int.aisingapore.org/gitlab-runner-base:latest
 
 evaluate:
   script:
+    - chmod +x ./evaluate_code.sh
     - ./evaluate_code.sh
 
 # before_script:
