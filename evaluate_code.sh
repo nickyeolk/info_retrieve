@@ -26,6 +26,9 @@ app_name=$CI_COMMIT_REF_NAME
 
 # }
 
+echo "export PATH="/root/anaconda3/bin:$PATH"" >> ~/.bashrc
+echo /bin/bash -c "source ~/.bashrc"
+
 if [ -d "./tests" ]
 then
     if [ ! -f "./environment.yml" ]
