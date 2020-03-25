@@ -171,7 +171,7 @@ def test_load_kb():
     gr = GoldenRetriever()
     kbh = kb_handler()
 
-    pdpa_df = pd.read_csv('../data/pdpa.csv')
+    pdpa_df = pd.read_csv('./data/pdpa.csv')
     pdpa = kbh.parse_df('pdpa', pdpa_df, 'answer', 'question', 'meta')
 
     
