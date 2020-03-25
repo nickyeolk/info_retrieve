@@ -30,12 +30,15 @@ app_name=$CI_COMMIT_REF_NAME
 # source ~/.bashrc
 
 cat /proc/version
+apt-get update
+apt-cache policy libc6
+apt-get install libc6
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
-apt-get update
+
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
 apt-get -y install unixodbc unixodbc-dev
 
