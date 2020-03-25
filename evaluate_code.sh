@@ -29,6 +29,14 @@ app_name=$CI_COMMIT_REF_NAME
 # echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
 # source ~/.bashrc
 
+
+curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
+curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+apt-get update
+ACCEPT_EULA=Y apt-get -y install msodbcsql17
+apt-get -y install unixodbc unixodbc-dev
+
+
 if [ -d "./tests" ]
 then
     if [ ! -f "./requirements.txt" ]
