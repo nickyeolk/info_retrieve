@@ -24,7 +24,7 @@ app_name=$CI_COMMIT_REF_NAME
 #            "thread": { "name": "spaces/'"${CHATROOM_ID}"'/threads/'"${!current_assignment}"'" }
 #       }'
 
-}
+# }
 
 if [ -d "./tests" ]
 then
