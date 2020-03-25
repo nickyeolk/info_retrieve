@@ -29,6 +29,8 @@ app_name=$CI_COMMIT_REF_NAME
 # echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
 # source ~/.bashrc
 
+
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
