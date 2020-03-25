@@ -67,20 +67,6 @@ then
         exit 1
     fi
 
-    lint_score=$(pylint ./src | grep "Your code has been rated at" | grep -Eo "[-]{0,1}[0-9]+[.][0-9]+" | head -1)
-    int_score=${lint_score%.*}
-
-    echo ""
-    if [ "$int_score" -gt "5" ]
-    then
-        echo "Eval passed. Posting result to chat channel"
-        post_text="'"${app_name}"' test passed. Lint score: '"${int_score}"'"
-        post_evaluation
-    else
-      echo "Lint score failed: $int_score"
-      exit 1
-    fi
-
 else
     echo "No tests. Skipping eval and posting to chat channel."
     post_text="No tests. Skipping eval for $app_name"
