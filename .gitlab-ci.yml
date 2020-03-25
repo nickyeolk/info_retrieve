@@ -1,14 +1,18 @@
 image: docker-registry.int.aisingapore.org/gitlab-runner-base:latest
 
-before_script:
-  - pip install --upgrade pip
-  - pip install pandas
-  - pip install scikit-learn
-
-golden-retriever-test:
+evaluate:
   script:
-    - python -m pytest
+    - ./evaluate_code.sh
 
-# corgi-test:
+# before_script:
+#   - pip install --upgrade pip
+#   - pip install pandas
+#   - pip install scikit-learn
+
+# golden-retriever-test:
 #   script:
-#     - ./test.py
+#     - python -m pytest
+
+# # corgi-test:
+# #   script:
+# #     - ./test.py
