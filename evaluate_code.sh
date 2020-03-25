@@ -33,8 +33,8 @@ cat /proc/version
 apt-get update
 apt-cache policy libc6
 apt-get install libc6
-apt-get install --reinstall build-essential
-aptitude reinstall gcc-5 g++-5
+apt-get -y install --reinstall build-essential
+# aptitude reinstall gcc-5 g++-5
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install apt-transport-https ca-certificates
