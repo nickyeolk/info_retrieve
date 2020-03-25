@@ -26,19 +26,19 @@ app_name=$CI_COMMIT_REF_NAME
 
 # }
 
-echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
-source ~/.bashrc
+# echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
+# source ~/.bashrc
 
 if [ -d "./tests" ]
 then
-    if [ ! -f "./environment.yml" ]
+    if [ ! -f "./requirements.txt" ]
     then
-        echo "No environment.yml file found"
+        echo "No requirements.txt file found"
         exit 1
     fi
 
-    conda env update -n base --file "./environment.yml"
-    # pip install -r "./requirements.txt"
+    # conda env update -n base --file "./environment.yml"
+    pip install -r "./requirements.txt"
     # Manually put these back since conda env update removes them
     pip install pytest pylint radon
 
