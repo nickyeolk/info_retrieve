@@ -29,6 +29,7 @@ app_name=$CI_COMMIT_REF_NAME
 # echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
 # source ~/.bashrc
 
+echo cat /proc/version
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install apt-transport-https ca-certificates
