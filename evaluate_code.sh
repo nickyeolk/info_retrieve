@@ -27,6 +27,7 @@ app_name=$CI_COMMIT_REF_NAME
 # }
 
 echo "export PATH="~/anaconda3/bin:$PATH"" >> ~/.bashrc
+source /opt/anaconda/etc/profile.d/conda.sh
 
 if [ -d "./tests" ]
 then
