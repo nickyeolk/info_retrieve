@@ -36,6 +36,7 @@ apt-get update
 apt-cache policy libc6
 apt-get install libc6
 apt-get -y install --reinstall build-essential
+apt-get install -y python-sqlalchemy
 # aptitude reinstall gcc-5 g++-5
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
