@@ -11,10 +11,12 @@ from src.kb_handler import kb, kb_handler
 from sklearn.model_selection import train_test_split
 
 
+CONN_STR = os.environ['CONN_STR']
+
 def test_make_query():
     gr = GoldenRetriever()
     kbh = kb_handler() 
-    nrf = kbh.load_sql_kb(cnxn_path="./db_cnxn_str.txt", kb_names=["nrf"])
+    nrf = kbh.load_sql_kb(cnxn_str=CONN_STR, cnxn_path="", kb_names=["nrf"])
     gr.load_kb(nrf)
 
     querystring = "Can I change funding source"
@@ -114,7 +116,7 @@ def test_finetune_export_restore(create_delete_model_savepath):
 
     # Get df using kb_handler
     kbh = kb_handler()
-    kbs = kbh.load_sql_kb(cnxn_path="./db_cnxn_str.txt",
+    kbs = kbh.load_sql_kb(cnxn_str=CONN_STR, cnxn_path="",
                           kb_names=['PDPA'])
 
     df = pd.concat([single_kb.create_df() for single_kb in kbs]).reset_index(drop='True')
