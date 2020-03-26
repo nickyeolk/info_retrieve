@@ -34,10 +34,7 @@ cat /proc/version
 echo "Updating apt-get"
 apt-get update
 
-echo "Updating libc6"
-apt-cache policy libc6
-apt-get install libc6
-apt-get -y install --reinstall build-essential
+
 apt-get install -y python-sqlalchemy
 # aptitude reinstall gcc-5 g++-5
 
@@ -49,6 +46,11 @@ curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sou
 
 echo "Updating apt-get"
 apt-get update
+echo "Updating libc6"
+apt-cache policy libc6
+apt-get install libc6
+apt-get -y install --reinstall build-essential
+
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
 apt-get -y install unixodbc unixodbc-dev
 
