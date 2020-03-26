@@ -361,7 +361,7 @@ class kb_handler():
         if cnxn_str == "":
             conn = pyodbc.connect(open(cnxn_path, 'r').read())
         else:
-            conn=cnxn_str
+            conn = pyodbc.connect(cnxn_str)
         
         if len(kb_names) == 0:
             kb_names = pd.read_sql_query("""SELECT dbo.kb_raw.kb_name FROM dbo.kb_raw """, 
