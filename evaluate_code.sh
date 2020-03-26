@@ -3,8 +3,6 @@
 app_name=$CI_COMMIT_REF_NAME
 
 cat /proc/version
-echo "Updating apt-get"
-apt-get update
 
 echo "Installing microsoft related packages"
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
@@ -18,6 +16,9 @@ apt-get install libc6
 
 echo "Installing build-essential"
 apt-get -y install --reinstall build-essential
+
+echo "Updating apt-get"
+apt-get update
 
 echo "Installing msodbcsql17"
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
