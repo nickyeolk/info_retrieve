@@ -4,7 +4,6 @@
 
 #app_name=$(git branch | grep \* | cut -d ' ' -f2)
 app_name=$CI_COMMIT_REF_NAME
-export $CONN_STR
 
 
 # next_assignment=$(find . -maxdepth 1 -name "assignment*" | wc -l | tr -d '[:space:]')
@@ -32,7 +31,10 @@ export $CONN_STR
 # source ~/.bashrc
 
 cat /proc/version
-apt-get update
+echo "Updating apt-get"
+sudo apt-get update
+
+echo "Updating libc6"
 apt-cache policy libc6
 apt-get install libc6
 apt-get -y install --reinstall build-essential
