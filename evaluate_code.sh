@@ -47,6 +47,8 @@ apt-get install apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
+echo "Updating apt-get"
+apt-get update
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
 apt-get -y install unixodbc unixodbc-dev
 
