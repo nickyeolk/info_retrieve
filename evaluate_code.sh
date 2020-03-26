@@ -47,7 +47,7 @@ echo "Updating apt-get"
 apt-get update
 echo "Updating libc6"
 apt-cache policy libc6
-apt-get install libc6-i386
+apt-get install libc6:i386
 echo "Installing build-essential"
 apt-get -y install --reinstall build-essential
 
