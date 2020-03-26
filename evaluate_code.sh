@@ -32,7 +32,7 @@ app_name=$CI_COMMIT_REF_NAME
 
 cat /proc/version
 echo "Updating apt-get"
-sudo apt-get update
+apt-get update
 
 echo "Updating libc6"
 apt-cache policy libc6
