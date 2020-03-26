@@ -6,6 +6,7 @@
 app_name=$CI_COMMIT_REF_NAME
 export $CONN_STR
 
+
 # next_assignment=$(find . -maxdepth 1 -name "assignment*" | wc -l | tr -d '[:space:]')
 
 # current=$(($next_assignment - 1))
