@@ -344,7 +344,7 @@ class kb_handler():
         return kb(kb_name, responses, queries, mapping) 
 
 
-    def load_sql_kb(self, cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
+    def load_sql_kb(self, cnxn_str="", cnxn_path = "../db_cnxn_str.txt", kb_names=[]):
         """
         Load the knowledge bases from SQL.
         
@@ -358,7 +358,10 @@ class kb_handler():
             kb_names: (list, default=[]) to list specific kb_names to parse
                                          else if empty, parse all of them
         """
-        conn = pyodbc.connect(open(cnxn_path, 'r').read())
+        if cnxn_str == "":
+            conn = pyodbc.connect(open(cnxn_path, 'r').read())
+        else:
+            conn=cnxn_str
         
         if len(kb_names) == 0:
             kb_names = pd.read_sql_query("""SELECT dbo.kb_raw.kb_name FROM dbo.kb_raw """, 
