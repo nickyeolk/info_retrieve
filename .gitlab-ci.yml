@@ -4,16 +4,3 @@ evaluate:
   script:
     - chmod +x ./evaluate_code.sh
     - ./evaluate_code.sh
-
-# before_script:
-#   - pip install --upgrade pip
-#   - pip install pandas
-#   - pip install scikit-learn
-
-# golden-retriever-test:
-#   script:
-#     - python -m pytest
-
-# # corgi-test:
-# #   script:
-# #     - ./test.py
