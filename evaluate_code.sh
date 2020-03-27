@@ -4,7 +4,7 @@ app_name=$CI_COMMIT_REF_NAME
 
 cat /proc/version
 
-echo "Installing microsoft related packages"
+echo "Installing microsoft odbcsql related packages"
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
