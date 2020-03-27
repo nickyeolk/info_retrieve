@@ -52,6 +52,5 @@ then
     fi
 
 else
-    echo "No tests. Skipping eval and posting to chat channel."
-    post_text="No tests. Skipping eval for $app_name"
+    echo "No tests"
 fi
