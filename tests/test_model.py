@@ -134,18 +134,26 @@ def test_finetune_export_restore(create_delete_model_savepath):
 
     train_dataset_loader = random_triplet_generator(df, train_dict)
 
+    
     for i in range(1):
         cost_mean_total = 0
+        batch_counter = 0
 
         train_dataset_loader = random_triplet_generator(df, train_dict)
 
         for q, r, neg_r in train_dataset_loader:
+            
+            # Test using 1 batch of training data            
+            if batch_counter == 1:
+                break
 
             cost_mean_batch = gr.finetune(question=q, answer=r, context=r, \
                                           neg_answer=neg_r, neg_answer_context=neg_r, \
                                           margin=0.3, loss="triplet")
 
             cost_mean_total += cost_mean_batch
+
+            batch_counter += 1
 
     initial_pred = gr.predict("What is personal data?")
 
