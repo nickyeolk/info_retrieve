@@ -37,9 +37,9 @@ then
         exit 1
     fi
 
-    # conda env update -n base --file "./environment.yml"
-    pip install --upgrade pip
-    pip install -r "./requirements.txt"
+    conda env update -n base --file "./environment.yml"
+    # pip install --upgrade pip
+    # pip install -r "./requirements.txt"
     # Manually put these back since conda env update removes them
     pip install pytest pylint radon
 
