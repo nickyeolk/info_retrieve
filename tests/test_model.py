@@ -165,7 +165,7 @@ def test_finetune_export_restore(create_delete_model_savepath):
     restored_pred = gr_new.predict("What is personal data?")
 
     assert isinstance(cost_mean_total, np.floating)
-    assert cost_mean_total == 0.0000
+    assert cost_mean_total != 0.0000
     assert os.path.isdir(savepath)
     assert np.array_equal(initial_pred, restored_pred)
 
