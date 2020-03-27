@@ -102,7 +102,7 @@ def random_triplet_generator(df, train_dict):
 def create_delete_model_savepath():
 
     savepath = os.path.join(os.getcwd(), "finetune")
-
+    os.makedirs(savepath)
     yield savepath
 
     shutil.rmtree(savepath)
