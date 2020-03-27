@@ -5,13 +5,13 @@ import random
 import numpy as np
 import shutil
 
-
 from src.model import GoldenRetriever
 from src.kb_handler import kb, kb_handler
 from sklearn.model_selection import train_test_split
 
 
 CONN_STR = os.environ['CONN_STR']
+
 
 def test_make_query():
     gr = GoldenRetriever()
@@ -40,8 +40,9 @@ def gen(batch_size, query, response, neg_response, shuffle_data=False):
             q_batch = [x[0] for x in zip_list[offset:offset+batch_size]]
             r_batch = [x[1] for x in zip_list[offset:offset+batch_size]]
             neg_r_batch = [x[2] for x in zip_list[offset:offset+batch_size]]
-        
+
             yield(q_batch, r_batch, neg_r_batch)
+
 
 def _generate_neg_ans(df, train_dict):
     """
@@ -81,8 +82,9 @@ def _generate_neg_ans(df, train_dict):
         keys.append(np.array(ans_neg_idxs))
 
         train_dict_with_neg[kb] = keys
-    
+
     return train_dict_with_neg
+
 
 def random_triplet_generator(df, train_dict):
     train_dict_with_neg = _generate_neg_ans(df, train_dict)
@@ -92,9 +94,9 @@ def random_triplet_generator(df, train_dict):
     train_query = df.iloc[train_pos_idxs].query_string.tolist()
     train_response = df.iloc[train_pos_idxs].processed_string.tolist()
     train_neg_response = df.iloc[train_neg_idxs].processed_string.tolist()
-    
+
     train_dataset_loader = gen(32, train_query, train_response, train_neg_response, shuffle_data=True)
-    
+
     return train_dataset_loader
 
 
@@ -132,16 +134,14 @@ def test_finetune_export_restore(create_delete_model_savepath):
 
     train_dataset_loader = random_triplet_generator(df, train_dict)
 
-    batch_counter = 0
-
     for i in range(2):
-
+        batch_counter = 0
         cost_mean_total = 0
 
         train_dataset_loader = random_triplet_generator(df, train_dict)
 
         for q, r, neg_r in train_dataset_loader:
-            
+
             if batch_counter == 1:
                 break
 
@@ -175,7 +175,6 @@ def test_load_kb():
     pdpa_df = pd.read_csv('./data/pdpa.csv')
     pdpa = kbh.parse_df('pdpa', pdpa_df, 'answer', 'question', 'meta')
 
-    
     gr.load_kb(kb_=pdpa)
 
     assert isinstance(gr.kb["pdpa"], kb)
