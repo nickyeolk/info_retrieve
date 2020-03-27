@@ -134,27 +134,18 @@ def test_finetune_export_restore(create_delete_model_savepath):
 
     train_dataset_loader = random_triplet_generator(df, train_dict)
 
-    for i in range(2):
-        batch_counter = 0
+    for i in range(1):
         cost_mean_total = 0
 
         train_dataset_loader = random_triplet_generator(df, train_dict)
 
         for q, r, neg_r in train_dataset_loader:
 
-            if batch_counter == 1:
-                break
-
             cost_mean_batch = gr.finetune(question=q, answer=r, context=r, \
                                           neg_answer=neg_r, neg_answer_context=neg_r, \
                                           margin=0.3, loss="triplet")
 
-            if i == 1:
-                cost_mean_batch_epoch1 = cost_mean_batch
-
             cost_mean_total += cost_mean_batch
-
-            batch_counter += 1
 
     initial_pred = gr.predict("What is personal data?")
 
@@ -165,8 +156,8 @@ def test_finetune_export_restore(create_delete_model_savepath):
     gr_new.restore(savepath)
     restored_pred = gr_new.predict("What is personal data?")
 
-    assert isinstance(cost_mean_batch, np.floating)
-    assert cost_mean_batch != cost_mean_batch_epoch1
+    assert isinstance(cost_mean_total, np.floating)
+    assert cost_mean_total == 0.0000
     assert os.path.isdir(savepath)
     assert np.array_equal(initial_pred, restored_pred)
 
