@@ -1,4 +1,4 @@
-image: docker-registry.int.aisingapore.org/gitlab-runner-base:latest
+image: gitlab/gitlab-runner:latest
 
 evaluate:
   script:
