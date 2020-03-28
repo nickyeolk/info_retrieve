@@ -5,17 +5,17 @@ app_name=$CI_COMMIT_REF_NAME
 cat /proc/version
 
 echo "Installing microsoft odbcsql related packages"
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
-apt-get install apt-transport-https ca-certificates
+# apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
+# apt-get install apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-echo "Updating libc6"
-apt-cache policy libc6
-apt-get install libc6
+# echo "Updating libc6"
+# apt-cache policy libc6
+# apt-get install libc6
 
-echo "Installing build-essential"
-apt-get -y install --reinstall build-essential
+# echo "Installing build-essential"
+# apt-get -y install --reinstall build-essential
 
 echo "Updating apt-get"
 apt-get update
@@ -26,8 +26,8 @@ ACCEPT_EULA=Y apt-get -y install msodbcsql17
 echo "Installing unixodbc"
 apt-get -y install unixodbc unixodbc-dev
 
-echo "Installing sqlalchemy"
-apt-get install -y python-sqlalchemy
+# echo "Installing sqlalchemy"
+# apt-get install -y python-sqlalchemy
 
 if [ -d "./tests" ]
 then
