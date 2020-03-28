@@ -9,7 +9,7 @@ apt install -y curl
 
 echo "Installing microsoft odbcsql related packages"
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
-apt-get install apt-transport-https ca-certificates
+apt-get install -y apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
