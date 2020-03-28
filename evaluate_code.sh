@@ -5,7 +5,7 @@ app_name=$CI_COMMIT_REF_NAME
 cat /proc/version
 
 echo "Installing curl"
-apt install curl
+apt install -y curl
 
 echo "Installing microsoft odbcsql related packages"
 # apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
