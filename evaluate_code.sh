@@ -14,40 +14,31 @@ apt-get install -y apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
 curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-# echo "Updating libc6"
-# apt-cache policy libc6
-# apt-get install libc6
-
-
-
 echo "Updating apt-get"
 apt-get update
 
-conda update libgcc
-
 echo "Installing msodbcsql17"
+conda update libgcc
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
 
 echo "Installing unixodbc"
 apt-get -y install unixodbc unixodbc-dev
 
-# echo "Installing sqlalchemy"
-# apt-get install -y python-sqlalchemy
-
+# Need to install this for pyodbc
 echo "Installing build-essential"
 apt-get -y install --reinstall build-essential
 
 if [ -d "./tests" ]
 then
-    if [ ! -f "./requirements.txt" ]
+    if [ ! -f "./environment.yml" ]
     then
-        echo "No requirements.txt file found"
+        echo "No environment.yml file found"
         exit 1
     fi
 
     conda env update -n base --file "./environment.yml"
-    # pip install --upgrade pip
-    # pip install -r "./requirements.txt"
+    pip install --upgrade pip
+    
     # Manually put these back since conda env update removes them
     pip install pytest pylint radon
 
