@@ -8,6 +8,7 @@ echo "Installing curl"
 apt install -y curl
 
 echo "Installing microsoft odbcsql related packages"
+apt-get install -y gnupg2
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
 apt-get install -y apt-transport-https ca-certificates
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add
