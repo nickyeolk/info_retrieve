@@ -20,6 +20,8 @@ curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sou
 echo "Updating apt-get"
 apt-get update
 
+conda update libgcc
+
 echo "Installing msodbcsql17"
 ACCEPT_EULA=Y apt-get -y install msodbcsql17
 
