@@ -136,6 +136,23 @@ gr.load_kb(kbs)
 conn = pyodbc.connect(open(args.dir, 'r').read())
 cursor = conn.cursor()
 
+def ensure_connection():
+    """
+    Ensure that pyodbc connection is still working
+
+    https://stackoverflow.com/questions/10847703/check-if-pyodbc-connection-is-open-or-closed
+    """
+    global conn, cursor
+
+    try:
+        cursor = conn.cursor()
+    except e:
+        if e.__class__ == pyodbc.ProgrammingError:        
+            # make the SQL connection and cursor
+            conn = pyodbc.connect(open(args.dir, 'r').read())
+            cursor = conn.cursor()
+
+
 get_kb_dir_id, get_kb_raw_id, permissions = init_sql_references(conn)
 
 
@@ -210,6 +227,7 @@ def make_query():
     # returned answers clause_id
     rowinfo.extend(gr.kb[kb_name].responses.clause_id.iloc[reply_index].tolist())
 
+    ensure_connection()
     cursor.execute('INSERT INTO query_log VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', rowinfo)
     cursor.commit()
 
@@ -249,6 +267,7 @@ def save_feedback():
     rowinfo.append(query_id)
     rowinfo.extend(is_correct[:5]) # ensures only 5 values are logged
 
+    ensure_connection()
     cursor.execute('INSERT INTO feedback_log VALUES (?, ?, ?, ?, ?, ?, ?)', rowinfo)
     cursor.commit()
 
@@ -285,7 +304,8 @@ def upload_knowledge_base_to_sql():
     """
     request_timestamp = datetime.datetime.now()
     request_dict = request.get_json()
-
+    ensure_connection()
+    
     # verify that required arguments are inside
     if not all([key in ['hashkey','kb_name', 'kb'] for key in request_dict.keys()]):
         raise InvalidUsage(message="knowledge_base endpoint requires arguments: hashkey, kb_name, kb")
