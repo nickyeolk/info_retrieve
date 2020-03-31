@@ -4,7 +4,7 @@ import tensorflow_hub as hub
 import pandas as pd
 import numpy as np
 import datetime
-import tensorflow_text
+# import tensorflow_text
 import pyodbc
 from .utils import split_txt, read_txt, clean_txt, read_kb_csv
 from sklearn.metrics.pairwise import cosine_similarity
