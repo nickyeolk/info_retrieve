@@ -1,14 +1,27 @@
 import streamlit as st
 import pandas as pd
+import time
 
 from src.model import GoldenRetriever
 from src.kb_handler import kb_handler
+from src.importance import importance_by_erasure, partial_highlight
+from src import SessionState
 
 
+# Init per-session persistent state variabless
+state = SessionState.get(fetch=False, 
+                        prediction=[], 
+                        interpret0=False, interpret1=False, interpret2=False, interpret3=False, interpret4=False, 
+                        importance_frame_0=None,importance_frame_1=None,importance_frame_2=None,importance_frame_3=None,importance_frame_4=None, 
+                        k0=5,k1=5,k2=5,k3=5,k4=5,
+)
+
+
+# 0. CACHED FUNCTIONS FOR INIT AND INTERPRET
 @st.cache(allow_output_mutation=True)
 def init():
     retriever = GoldenRetriever()
-    retriever.restore('./2/')
+    # retriever.restore('./2/')
 
     # parse text into kb
     kbh = kb_handler()
@@ -36,8 +49,20 @@ def init():
     # retriever.load_kb(kbs)
     return retriever
 
+# @st.cache(allow_output_mutation=True)
+# def interpret(response, query):
+#     word_importance = importance_by_erasure(gr, 
+#                                             response,
+#                                             query,
+#                                         )
+#     return word_importance
+
 gr = init()
 
+
+
+
+# 1. INTRODUCTION AND INFO
 st.title('GoldenRetriever')
 st.header('This Information Retrieval demo allows you to query FAQs, T&Cs, or your own knowledge base in natural language.')
 st.markdown('View the source code [here](https://github.com/nickyeolk/info_retrieve)!')
@@ -49,6 +74,10 @@ kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 # 'nrf':"Can I vire from EOM into travel?",
                 'raw_kb':"What do you not love?"}
 
+
+
+
+# 2. USER INPUT FOR KNOWLEDGE BASES AND QUERY
 def format_func(kb_name):
     namedicts={'covid19':'COVID-19',
                 'pdpa':'PDPA',
@@ -64,7 +93,23 @@ if kb=='raw_kb':
                         value="""I love my chew toy!\n\nI hate Mondays.\n""")
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
-if st.button('Fetch') or (data != kb_to_starqn[kb]): #So the answer will not appear right away
+
+
+
+
+# 3. PRESENTING RESULTS
+if st.button('Fetch', key='fetch'):
+    
+    # 1. Sets fetch to True
+    # 2. Resets all interpret states to False
+    state.fetch = True
+    for i in range(5):
+        setattr(state, f"interpret{i}", False)
+
+# if state.fetch == True or (data != kb_to_starqn[kb]): 
+#     # first condition is separate from st.button('Fetch'), to keep the state persistent
+#     # Second condition ensures the answer will not appear right away
+
     if kb=='raw_kb':
         # load raw text kb
         kbh = kb_handler()
@@ -75,26 +120,49 @@ if st.button('Fetch') or (data != kb_to_starqn[kb]): #So the answer will not app
         gr.load_kb(raw_kb)
         
     prediction, scores = gr.make_query(data, top_k=int(top_k), kb_name=kb)
-    qn_string="""<h3><text>Question: </text>{}</h3>""".format(data)
-    st.markdown(qn_string, unsafe_allow_html=True)
+    state.prediction = prediction
+    time.sleep(2)
+    
+qn_string="""<h3><text>Question: </text>{}</h3>""".format(data)
+st.markdown(qn_string, unsafe_allow_html=True)
 
-    for ansnum, result in enumerate(prediction):
+if len(state.prediction)>0:
+    for ansnum, result in enumerate(state.prediction):
+        
         anshead_string = """<h3><text>Answer {}</text></h3>""".format(ansnum+1)
-        st.markdown(anshead_string, unsafe_allow_html=True)
-        reply_string="""<table>"""
-        lines = [line for line in result.split('\n') if line]
-        for line in lines:
-            reply_string += """<tr>"""
-            tabledatas = line.split(';;')
-            for tabledata in tabledatas:
-                if len(tabledatas)>1:
-                    line_string = """<td>{}</td>""".format(tabledata)
-                else:
-                    line_string = """<td colspan=42>{}</td>""".format(tabledata)
-                reply_string += line_string
-            reply_string += """</tr>"""
-        reply_string+="""</table><br>"""
-        st.markdown(reply_string, unsafe_allow_html=True)
+
+        markdown_context = st.empty()
+        markdown_answer = st.empty()
+
+        if st.button('interpret', key=f"key_{ansnum}"):
+            setattr(state, f"interpret{ansnum}", True) 
+            setattr(state, f"importance_frame_{ansnum}", importance_by_erasure(gr, result, data))
+
+        if state.fetch:
+            if getattr(state, f"interpret{ansnum}"):
+                setattr(state, f"k{ansnum}", st.slider("Most important words", 0, len(result.split())) )
+                markdown_prediction = partial_highlight(getattr(state, f"importance_frame_{ansnum}"), k=getattr(state, f"k{ansnum}"))
+            else:
+                markdown_prediction = result
+
+            # set the markdown object
+            markdown_context.markdown(anshead_string, unsafe_allow_html=True)
+            reply_string="""<table>"""
+            lines = [line for line in markdown_prediction.split('\n') if line]
+            for line in lines:
+                reply_string += """<tr>"""
+                tabledatas = line.split(';;')
+                for tabledata in tabledatas:
+                    if len(tabledatas)>1:
+                        line_string = """<td>{}</td>""".format(tabledata)
+                    else:
+                        line_string = """<td colspan=42>{}</td>""".format(tabledata)
+                    reply_string += line_string
+                reply_string += """</tr>"""
+            reply_string+="""</table><br>"""
+
+        markdown_answer.markdown(reply_string, unsafe_allow_html=True)
+
 
 st.markdown(
 """
