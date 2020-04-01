@@ -7,7 +7,6 @@ from src.kb_handler import kb_handler
 from src.importance import importance_by_erasure, partial_highlight
 from src import SessionState
 
-
 # Init per-session persistent state variabless
 state = SessionState.get(fetch=False, 
                         prediction=[], 
@@ -15,7 +14,6 @@ state = SessionState.get(fetch=False,
                         importance_frame_0=None,importance_frame_1=None,importance_frame_2=None,importance_frame_3=None,importance_frame_4=None, 
                         k0=5,k1=5,k2=5,k3=5,k4=5,
 )
-
 
 # 0. CACHED FUNCTIONS FOR INIT AND INTERPRET
 @st.cache(allow_output_mutation=True)
@@ -49,17 +47,7 @@ def init():
     # retriever.load_kb(kbs)
     return retriever
 
-# @st.cache(allow_output_mutation=True)
-# def interpret(response, query):
-#     word_importance = importance_by_erasure(gr, 
-#                                             response,
-#                                             query,
-#                                         )
-#     return word_importance
-
 gr = init()
-
-
 
 
 # 1. INTRODUCTION AND INFO
@@ -73,9 +61,6 @@ kb_to_starqn = {'pdpa':"Can an organization retain the physical NRIC?",
                 'covid19':'what is coronavirus?',
                 # 'nrf':"Can I vire from EOM into travel?",
                 'raw_kb':"What do you not love?"}
-
-
-
 
 # 2. USER INPUT FOR KNOWLEDGE BASES AND QUERY
 def format_func(kb_name):
@@ -93,8 +78,6 @@ if kb=='raw_kb':
                         value="""I love my chew toy!\n\nI hate Mondays.\n""")
 top_k = st.radio('Number of Results', options=[1,2,3], index=2)
 data = st.text_input(label='Input query here', value=kb_to_starqn[kb])
-
-
 
 
 # 3. PRESENTING RESULTS
@@ -162,7 +145,6 @@ if len(state.prediction)>0:
             reply_string+="""</table><br>"""
 
         markdown_answer.markdown(reply_string, unsafe_allow_html=True)
-
 
 st.markdown(
 """
