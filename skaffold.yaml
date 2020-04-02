@@ -1,0 +1,21 @@
+apiVersion: skaffold/v1
+kind: Config
+metadata:
+  name: assignment7
+build:
+  artifacts:
+  - image: "100edockerregistry.azurecr.io/aiap/assignment7/username"
+deploy:
+  helm:
+    flags:
+      upgrade:
+        - --install
+    releases:
+      - name: assignment7-username
+        chartPath: ci/myapp
+        namespace: aiap
+        values:
+          image: "100edockerregistry.azurecr.io/aiap/assignment7/username"
+        setValueTemplates:
+          ingress.hosts[0].host: "username.aiap5.okdapp.tekong.aisingapore.net"
+          ingress.hosts[0].paths[0]: "/"
