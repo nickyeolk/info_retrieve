@@ -7,3 +7,5 @@ transformers
 pyodbc
 tika 
 streamlit
+tensorflow-hub
+seabord 
