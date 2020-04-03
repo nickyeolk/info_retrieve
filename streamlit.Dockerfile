@@ -14,4 +14,4 @@ WORKDIR /code
 RUN wget https://finetunedweights.blob.core.windows.net/finetuned02/variables.tar.gz \
 && tar -zxvf variables.tar.gz
 
-CMD ["streamlit", "run", "--server.port", "5000","--server.headless","true", "--browser.serverAddress","0.0.0.0", "--server.enableCORS", "false",  "app2.py"]
+CMD ["streamlit", "run", "--server.port", "5000","--server.headless","true", "--browser.serverAddress","0.0.0.0", "--server.enableCORS", "false",  "st_demo.py"]
