@@ -8,4 +8,4 @@ pyodbc
 tika 
 streamlit
 tensorflow-hub
-seabord 
+seaborn 
