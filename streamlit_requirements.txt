@@ -1,6 +1,6 @@
 pandas 
 scikit-learn
-tensorflow==2.1.0
+tensorflow==2.9.3
 tensorflow-estimator==2.1.0
 tensorflow-text==2.0.1
 transformers
